@@ -49,9 +49,9 @@ log that satisfies medico-legal chain-of-custody requirements.
 
 The system is built as a three-tier web application:
 
-- **Frontend** — React (Vite) with Tailwind CSS, deployed on Vercel
-- **Backend** — FastAPI (Python) with SQLAlchemy ORM, deployed on Railway
-- **Database** — PostgreSQL hosted on Railway
+- **Frontend** - React (Vite) with Tailwind CSS, deployed on Vercel
+- **Backend** - FastAPI (Python) with SQLAlchemy ORM, deployed on Railway
+- **Database** - PostgreSQL hosted on Railway
 
 ---
 
