@@ -1,4 +1,4 @@
-# FMDIS — Forensic Medical Department Information System
+# FMDIS - Forensic Medical Department Information System
 
 A web-based information system designed to digitize and streamline the
 operations of a hospital forensic medical department. The system manages
