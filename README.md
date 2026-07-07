@@ -24,27 +24,27 @@ database-driven web application.
 
 ## Features
 
-- **Case Management** — Register and track forensic cases with full
+- **Case Management** - Register and track forensic cases with full
   lifecycle status (Open / Pending / Closed)
-- **Patient Records** — Maintain patient demographics, BHT numbers,
+- **Patient Records** - Maintain patient demographics, BHT numbers,
   admission and discharge details
-- **MLEF Module** — Digital Medico-Legal Examination Forms with
+- **MLEF Module** - Digital Medico-Legal Examination Forms with
   injury classification, alcohol/drug examination, and sexual assault
   examination fields
-- **Post-Mortem Reports** — Structured entry covering external and
+- **Post-Mortem Reports** - Structured entry covering external and
   internal examination findings, cause-of-death chain (Ia/Ib/Ic/Id/II),
   and toxicology results
-- **Medico-Legal Reports** — Generate and track Form 1135 reports
+- **Medico-Legal Reports** - Generate and track Form 1135 reports
   dispatched to courts
-- **Autopsy Notification** — Manage Health 1328 forms with specimen
+- **Autopsy Notification** - Manage Health 1328 forms with specimen
   retention and maternal death classification
-- **Court Document Tracking** — Track court summons, trial dates, and
+- **Court Document Tracking** - Track court summons, trial dates, and
   certificates of receipt with automated overdue flagging
-- **Specimen Management** — Record specimen collection, storage
+- **Specimen Management** - Record specimen collection, storage
   location, and laboratory results (histology, serology, toxicology)
-- **Role-Based Access Control** — Separate access levels for Medical
+- **Role-Based Access Control** - Separate access levels for Medical
   Officers, Administrative Staff, Police Liaison Officers, and the DBA
-- **Audit Trail** — Tamper-evident logging of all data operations with
+- **Audit Trail** - Tamper-evident logging of all data operations with
   user ID, timestamp, and action type
 
 ---
@@ -100,4 +100,18 @@ The system uses a relational database with 14 tables:
 
 ---
 
-## Project Structure
+## Academic Context
+
+Developed as part of the CO2050 - Database Systems module,
+Department of Computer Engineering,
+Faculty of Engineering, University of Peradeniya.
+
+Based on real-world forensic medical forms and workflows from the
+Department of Forensic Medicine, Faculty of Medicine,
+University of Peradeniya.
+
+---
+
+## License
+
+This project is intended for academic and educational purposes.
