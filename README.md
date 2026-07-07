@@ -2,7 +2,7 @@
 
 A web-based information system designed to digitize and streamline the
 operations of a hospital forensic medical department. The system manages
-the complete medico-legal workflow — from initial case registration and
+the complete medico-legal workflow from initial case registration and
 patient examination through post-mortem reporting, specimen tracking,
 and court document dispatch.
 
