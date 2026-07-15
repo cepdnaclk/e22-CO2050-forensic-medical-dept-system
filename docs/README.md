@@ -98,7 +98,7 @@ COURT_SUMMONS, COURT_RECEIPT, SPECIMEN, INVESTIGATION, AUDIT_LOG
 
 ## Links
 
-- [Project Repository](https://github.com/cepdnaclk/e22-co225-fmdis){:target="_blank"}
-- [Project Page](https://cepdnaclk.github.io/e22-co225-fmdis){:target="_blank"}
+- [Project Repository](https://github.com/cepdnaclk/e22-CO2050-forensic-medical-dept-system)
+- [Project Page](https://cepdnaclk.github.io/e22-CO2050-forensic-medical-dept-system)
 - [Department of Computer Engineering](http://www.ce.pdn.ac.lk/)
 - [University of Peradeniya](https://eng.pdn.ac.lk/)
