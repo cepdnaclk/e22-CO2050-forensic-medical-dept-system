@@ -10,10 +10,10 @@ title: Forensic Medical Department Information System
 ---
 
 ## Team
-- E/22/052, K.H.D.M. Bimsara, [e22052@eng.pdn.ac.lk]
-- E/22/353, G.K.G. Sandeepa, [e22353@eng.pdn.ac.lk]
-- E/22/419, R.G.S.T. Weerasekara, [e22419@eng.pdn.ac.lk]
-- E/22/058, M.M.T. Cooray, [e22058@eng.pdn.ac.lk]
+- E/22/052, K.H.D.M. Bimsara
+- E/22/353, G.K.G. Sandeepa
+- E/22/419, R.G.S.T. Weerasekara
+- E/22/058, M.M.T. Cooray
 
 ## Table of Contents
 1. [Introduction](#introduction)
