@@ -1,308 +1,351 @@
--- Forensic Medicine Department Database Schema
--- Generated as part of the initial proposal
+-- database/schema.sql
 
-CREATE DATABASE IF NOT EXISTS forensic_db;
-USE forensic_db;
+CREATE DATABASE IF NOT EXISTS fmcms;
+USE fmcms;
 
--- --------------------------------------------------------
--- CORE ENTITIES
--- --------------------------------------------------------
-
-CREATE TABLE IF NOT EXISTS PATIENT (
-    PatientID INT AUTO_INCREMENT PRIMARY KEY,
-    FullName VARCHAR(255) NOT NULL,
-    Address TEXT,
-    DOB DATE,
-    Age INT,
-    Sex ENUM('Male', 'Female', 'Other'),
-    NIC VARCHAR(20) UNIQUE
+-- SUBSYSTEM 5: System Administration (Users and Roles first due to FKs)
+CREATE TABLE Roles (
+    role_id INT AUTO_INCREMENT PRIMARY KEY,
+    role_name VARCHAR(50) NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS `CASE` (
-    CaseID INT AUTO_INCREMENT PRIMARY KEY,
-    PatientID INT NOT NULL,
-    CaseNumber VARCHAR(50) UNIQUE NOT NULL,
-    CaseType ENUM('clinical', 'autopsy') NOT NULL,
-    IncidentDate DATE,
-    IncidentLocation VARCHAR(255),
-    PoliceStation VARCHAR(100),
-    CourtName VARCHAR(100),
-    FOREIGN KEY (PatientID) REFERENCES PATIENT(PatientID) ON DELETE CASCADE
+CREATE TABLE Users (
+    user_id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL UNIQUE,
+    password_hash VARCHAR(255) NOT NULL,
+    salt VARCHAR(255) NOT NULL,
+    email VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    mfa_enabled BOOLEAN DEFAULT FALSE,
+    failed_login_attempts INT DEFAULT 0,
+    locked_until DATETIME DEFAULT NULL
 );
 
-CREATE TABLE IF NOT EXISTS MLEF (
-    MLEFID INT AUTO_INCREMENT PRIMARY KEY,
-    CaseID INT UNIQUE NOT NULL,
-    SerialNo VARCHAR(50) UNIQUE,
-    DateOfIssue DATE,
-    ReasonForReferral TEXT,
-    IssuingOfficerName VARCHAR(100),
-    IssuingOfficerRegNo VARCHAR(50),
-    FOREIGN KEY (CaseID) REFERENCES `CASE`(CaseID) ON DELETE CASCADE
+CREATE TABLE User_Roles (
+    user_id INT,
+    role_id INT,
+    assigned_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    PRIMARY KEY (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE CASCADE,
+    FOREIGN KEY (role_id) REFERENCES Roles(role_id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS DOCTOR (
-    DoctorID INT AUTO_INCREMENT PRIMARY KEY,
-    Name VARCHAR(255) NOT NULL,
-    Qualifications TEXT,
-    SLMCRegNo VARCHAR(50) UNIQUE,
-    Designation VARCHAR(100),
-    Station VARCHAR(100)
+CREATE TABLE Permissions (
+    permission_id INT AUTO_INCREMENT PRIMARY KEY,
+    role_id INT,
+    table_name VARCHAR(100) NOT NULL,
+    can_read BOOLEAN DEFAULT FALSE,
+    can_write BOOLEAN DEFAULT FALSE,
+    can_delete BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (role_id) REFERENCES Roles(role_id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS CLINICAL_EXAM (
-    ExamID INT AUTO_INCREMENT PRIMARY KEY,
-    MLEFID INT UNIQUE NOT NULL,
-    DoctorID INT,
-    HospitalName VARCHAR(255),
-    Ward VARCHAR(50),
-    BHTNo VARCHAR(50),
-    AdmissionDate DATE,
-    ExamDate DATE,
-    DischargeDate DATE,
-    CategoryOfHurt ENUM('grievous', 'non-grievous'),
-    FatalOrdinaryCourse BOOLEAN,
-    AlcoholStatus VARCHAR(100),
-    DrugStatus VARCHAR(100),
-    SexualAssaultHistory TEXT,
-    FOREIGN KEY (MLEFID) REFERENCES MLEF(MLEFID) ON DELETE CASCADE,
-    FOREIGN KEY (DoctorID) REFERENCES DOCTOR(DoctorID) ON DELETE SET NULL
+CREATE TABLE Audit_Log (
+    log_id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT,
+    table_name VARCHAR(100) NOT NULL,
+    record_id VARCHAR(100) NOT NULL,
+    action VARCHAR(10) NOT NULL, -- SELECT, INSERT, UPDATE, DELETE
+    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    ip_address VARCHAR(45),
+    old_value JSON,
+    new_value JSON,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS COURT_ORDER (
-    OrderID INT AUTO_INCREMENT PRIMARY KEY,
-    CaseID INT NOT NULL,
-    OrderType VARCHAR(100),
-    MagistrateName VARCHAR(100),
-    DateIssued DATE,
-    FOREIGN KEY (CaseID) REFERENCES `CASE`(CaseID) ON DELETE CASCADE
+-- SUBSYSTEM 1: Case & Persons
+CREATE TABLE Case_Types (
+    case_type_id INT AUTO_INCREMENT PRIMARY KEY,
+    type_name VARCHAR(100) NOT NULL UNIQUE
 );
 
-CREATE TABLE IF NOT EXISTS POSTMORTEM (
-    PMID INT AUTO_INCREMENT PRIMARY KEY,
-    CaseID INT NOT NULL,
-    OrderID INT UNIQUE,
-    DoctorID INT,
-    PMSerialNo VARCHAR(50) UNIQUE,
-    ExamDate DATE,
-    CauseOfDeath TEXT,
-    FOREIGN KEY (CaseID) REFERENCES `CASE`(CaseID) ON DELETE CASCADE,
-    FOREIGN KEY (OrderID) REFERENCES COURT_ORDER(OrderID) ON DELETE SET NULL,
-    FOREIGN KEY (DoctorID) REFERENCES DOCTOR(DoctorID) ON DELETE SET NULL
+CREATE TABLE Cases (
+    case_id INT AUTO_INCREMENT PRIMARY KEY,
+    case_type_id INT,
+    inquest_no VARCHAR(100),
+    court_case_no VARCHAR(100),
+    status VARCHAR(50),
+    opened_date DATE NOT NULL,
+    FOREIGN KEY (case_type_id) REFERENCES Case_Types(case_type_id) ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS INJURY (
-    InjuryID INT AUTO_INCREMENT PRIMARY KEY,
-    ExamID INT,
-    PMID INT,
-    ItemNo INT,
-    NatureDescription TEXT,
-    SiteOnBody VARCHAR(255),
-    WeaponType ENUM('blunt', 'sharp', 'firearm', 'explosive', 'other'),
-    CategoryOfHurt ENUM('grievous', 'non-grievous'),
-    FOREIGN KEY (ExamID) REFERENCES CLINICAL_EXAM(ExamID) ON DELETE CASCADE,
-    FOREIGN KEY (PMID) REFERENCES POSTMORTEM(PMID) ON DELETE CASCADE,
-    CONSTRAINT chk_injury_link CHECK (
-        (ExamID IS NOT NULL AND PMID IS NULL) OR 
-        (ExamID IS NULL AND PMID IS NOT NULL)
-    )
+CREATE TABLE Deceased_Persons (
+    deceased_id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT NOT NULL,
+    full_name VARCHAR(255),
+    nic_no VARBINARY(255), -- Encrypted at application layer
+    age INT CHECK (age >= 0),
+    sex VARCHAR(20) CHECK (sex IN ('Male', 'Female', 'Other', 'Unknown')),
+    address TEXT,
+    date_of_admission DATE,
+    date_of_death DATE,
+    place_of_death VARCHAR(255),
+    CHECK (date_of_death >= date_of_admission),
+    FOREIGN KEY (case_id) REFERENCES Cases(case_id) ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS INVESTIGATION (
-    InvestigationID INT AUTO_INCREMENT PRIMARY KEY,
-    ExamID INT NOT NULL,
-    Type ENUM('xray', 'CT', 'toxicology', 'histology') NOT NULL,
-    Result TEXT,
-    DateDone DATE,
-    FOREIGN KEY (ExamID) REFERENCES CLINICAL_EXAM(ExamID) ON DELETE CASCADE
+CREATE TABLE Injured_Persons (
+    injured_id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT NOT NULL,
+    full_name VARCHAR(255),
+    nic_no VARBINARY(255), -- Encrypted at application layer
+    age INT CHECK (age >= 0),
+    sex VARCHAR(20) CHECK (sex IN ('Male', 'Female', 'Other', 'Unknown')),
+    address TEXT,
+    date_of_admission DATE,
+    FOREIGN KEY (case_id) REFERENCES Cases(case_id) ON DELETE RESTRICT
 );
 
-CREATE TABLE IF NOT EXISTS REFERRAL (
-    ReferralID INT AUTO_INCREMENT PRIMARY KEY,
-    ExamID INT NOT NULL,
-    Department VARCHAR(100),
-    Reason TEXT,
-    FOREIGN KEY (ExamID) REFERENCES CLINICAL_EXAM(ExamID) ON DELETE CASCADE
+-- SUBSYSTEM 2: Institutions & Personnel
+CREATE TABLE Hospitals (
+    hospital_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    address TEXT,
+    contact_no VARCHAR(50)
 );
 
-CREATE TABLE IF NOT EXISTS REPORT (
-    ReportID INT AUTO_INCREMENT PRIMARY KEY,
-    CaseID INT NOT NULL,
-    DoctorID INT,
-    MLEF_PM_No VARCHAR(50),
-    SerialNo VARCHAR(50) UNIQUE,
-    ExamDate DATE,
-    DispatchDate DATE,
-    Status ENUM('pending', 'issued') DEFAULT 'pending',
-    FOREIGN KEY (CaseID) REFERENCES `CASE`(CaseID) ON DELETE CASCADE,
-    FOREIGN KEY (DoctorID) REFERENCES DOCTOR(DoctorID) ON DELETE SET NULL
+CREATE TABLE Wards (
+    ward_id INT AUTO_INCREMENT PRIMARY KEY,
+    hospital_id INT,
+    ward_name VARCHAR(100),
+    ward_type VARCHAR(100),
+    FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS REPORT_OPINION (
-    OpinionID INT AUTO_INCREMENT PRIMARY KEY,
-    ReportID INT UNIQUE NOT NULL,
-    NonGrievousCount INT DEFAULT 0,
-    GrievousCount INT DEFAULT 0,
-    PenalCodeSection VARCHAR(100),
-    FatalCount INT DEFAULT 0,
-    BluntCount INT DEFAULT 0,
-    CutCount INT DEFAULT 0,
-    SharpCount INT DEFAULT 0,
-    StabCount INT DEFAULT 0,
-    FirearmCount INT DEFAULT 0,
-    BurnCount INT DEFAULT 0,
-    BiteCount INT DEFAULT 0,
-    LiquorSmell BOOLEAN,
-    LiquorInfluence BOOLEAN,
-    FOREIGN KEY (ReportID) REFERENCES REPORT(ReportID) ON DELETE CASCADE
+CREATE TABLE Police_Stations (
+    station_id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    division VARCHAR(100),
+    contact_no VARCHAR(50)
 );
 
-CREATE TABLE IF NOT EXISTS CERTIFICATE_OF_RECEIPT (
-    CertID INT AUTO_INCREMENT PRIMARY KEY,
-    ReportID INT UNIQUE NOT NULL,
-    CourtName VARCHAR(100),
-    CaseNumber VARCHAR(50),
-    DateOfTrial DATE,
-    ReceivedDate DATE,
-    FOREIGN KEY (ReportID) REFERENCES REPORT(ReportID) ON DELETE CASCADE
+CREATE TABLE Police_Officers (
+    officer_id INT AUTO_INCREMENT PRIMARY KEY,
+    station_id INT,
+    name VARCHAR(255) NOT NULL,
+    rank VARCHAR(100),
+    reg_no VARCHAR(100),
+    FOREIGN KEY (station_id) REFERENCES Police_Stations(station_id) ON DELETE SET NULL
 );
 
-CREATE TABLE IF NOT EXISTS COURT_SUMMONS (
-    SummonsID INT AUTO_INCREMENT PRIMARY KEY,
-    CaseID INT NOT NULL,
-    DoctorID INT,
-    CourtName VARCHAR(100),
-    HearingDate DATE,
-    HearingTime TIME,
-    RegistrarName VARCHAR(100),
-    FOREIGN KEY (CaseID) REFERENCES `CASE`(CaseID) ON DELETE CASCADE,
-    FOREIGN KEY (DoctorID) REFERENCES DOCTOR(DoctorID) ON DELETE CASCADE
+CREATE TABLE Courts (
+    court_id INT AUTO_INCREMENT PRIMARY KEY,
+    court_name VARCHAR(255) NOT NULL,
+    district VARCHAR(100),
+    jurisdiction_level VARCHAR(100)
 );
 
--- --------------------------------------------------------
--- ADDITIONAL REQUIRED ENTITIES
--- --------------------------------------------------------
-
--- Used for authentication based on role
-CREATE TABLE IF NOT EXISTS SYSTEM_USER (
-    UserID INT AUTO_INCREMENT PRIMARY KEY,
-    Username VARCHAR(50) UNIQUE NOT NULL,
-    PasswordHash VARCHAR(255) NOT NULL,
-    Role ENUM('doctor', 'clerk', 'admin', 'researcher') NOT NULL,
-    DoctorID INT UNIQUE,
-    FOREIGN KEY (DoctorID) REFERENCES DOCTOR(DoctorID) ON DELETE SET NULL
+CREATE TABLE Magistrates (
+    magistrate_id INT AUTO_INCREMENT PRIMARY KEY,
+    court_id INT,
+    name VARCHAR(255) NOT NULL,
+    appointment_no VARCHAR(100),
+    FOREIGN KEY (court_id) REFERENCES Courts(court_id) ON DELETE SET NULL
 );
 
--- Used for audit logging
-CREATE TABLE IF NOT EXISTS AUDIT_LOG (
-    LogID INT AUTO_INCREMENT PRIMARY KEY,
-    TableName VARCHAR(50),
-    Operation ENUM('INSERT', 'UPDATE', 'DELETE'),
-    RecordID INT,
-    UserID INT,
-    LogTimestamp TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-    Details TEXT,
-    FOREIGN KEY (UserID) REFERENCES SYSTEM_USER(UserID) ON DELETE SET NULL
+CREATE TABLE Medical_Officers (
+    mo_id INT AUTO_INCREMENT PRIMARY KEY,
+    full_name VARCHAR(255) NOT NULL,
+    slmc_reg_no VARCHAR(100),
+    qualification VARCHAR(255),
+    designation VARCHAR(100),
+    hospital_id INT,
+    user_id INT,
+    FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id) ON DELETE SET NULL,
+    FOREIGN KEY (user_id) REFERENCES Users(user_id) ON DELETE SET NULL
 );
 
--- --------------------------------------------------------
+-- SUBSYSTEM 3: Examination & Autopsy Records
+CREATE TABLE Autopsy_Notifications (
+    notification_id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT,
+    hospital_id INT,
+    inquirer_name VARCHAR(255),
+    magistrate_id INT,
+    pm_serial_no VARCHAR(100) UNIQUE,
+    date_of_death DATE,
+    cause_of_death_immediate VARBINARY(512), -- Encrypted
+    cause_of_death_antecedent VARBINARY(512), -- Encrypted
+    contributory_causes TEXT,
+    FOREIGN KEY (case_id) REFERENCES Cases(case_id) ON DELETE RESTRICT,
+    FOREIGN KEY (hospital_id) REFERENCES Hospitals(hospital_id) ON DELETE SET NULL,
+    FOREIGN KEY (magistrate_id) REFERENCES Magistrates(magistrate_id) ON DELETE SET NULL
+);
+
+CREATE TABLE PostMortem_Reports (
+    pm_report_id INT AUTO_INCREMENT PRIMARY KEY,
+    notification_id INT,
+    mo_id INT,
+    inquest_no VARCHAR(100),
+    exam_date DATE,
+    exam_place VARCHAR(255),
+    verdict TEXT,
+    cause_of_death_final TEXT,
+    FOREIGN KEY (notification_id) REFERENCES Autopsy_Notifications(notification_id) ON DELETE CASCADE,
+    FOREIGN KEY (mo_id) REFERENCES Medical_Officers(mo_id) ON DELETE RESTRICT
+);
+
+CREATE TABLE PostMortem_Findings (
+    finding_id INT AUTO_INCREMENT PRIMARY KEY,
+    pm_report_id INT,
+    body_region VARCHAR(100),
+    description TEXT,
+    is_natural_opening BOOLEAN DEFAULT FALSE,
+    ordinal_no INT,
+    FOREIGN KEY (pm_report_id) REFERENCES PostMortem_Reports(pm_report_id) ON DELETE CASCADE
+);
+
+CREATE TABLE MLEF_Forms (
+    mlef_id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT,
+    examinee_type VARCHAR(50) CHECK (examinee_type IN ('injured', 'deceased')),
+    mo_id INT,
+    police_officer_id INT,
+    reg_no VARCHAR(100),
+    exam_datetime DATETIME,
+    category_of_hurt VARCHAR(100),
+    FOREIGN KEY (case_id) REFERENCES Cases(case_id) ON DELETE RESTRICT,
+    FOREIGN KEY (mo_id) REFERENCES Medical_Officers(mo_id) ON DELETE RESTRICT,
+    FOREIGN KEY (police_officer_id) REFERENCES Police_Officers(officer_id) ON DELETE SET NULL
+);
+
+CREATE TABLE Court_Certificates (
+    cert_id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT,
+    court_id INT,
+    pm_report_id INT,
+    trial_date DATE,
+    dispatch_date DATE,
+    registrar_signature_ref VARCHAR(255),
+    FOREIGN KEY (case_id) REFERENCES Cases(case_id) ON DELETE RESTRICT,
+    FOREIGN KEY (court_id) REFERENCES Courts(court_id) ON DELETE RESTRICT,
+    FOREIGN KEY (pm_report_id) REFERENCES PostMortem_Reports(pm_report_id) ON DELETE SET NULL
+);
+
+-- SUBSYSTEM 4: Injuries & Forensic Detail
+CREATE TABLE Injuries (
+    injury_id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT,
+    mlef_id INT,
+    body_site VARCHAR(255),
+    nature VARCHAR(255),
+    size_shape VARCHAR(255),
+    severity_grievous_flag BOOLEAN DEFAULT FALSE,
+    FOREIGN KEY (case_id) REFERENCES Cases(case_id) ON DELETE CASCADE,
+    FOREIGN KEY (mlef_id) REFERENCES MLEF_Forms(mlef_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Injury_Causes (
+    cause_id INT AUTO_INCREMENT PRIMARY KEY,
+    injury_id INT,
+    weapon_type VARCHAR(100) CHECK (weapon_type IN ('blunt', 'sharp', 'firearm', 'burn', 'bite', 'other')),
+    description TEXT,
+    FOREIGN KEY (injury_id) REFERENCES Injuries(injury_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Body_Diagram_Marks (
+    mark_id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT,
+    diagram_ref VARCHAR(255),
+    coordinate_x FLOAT,
+    coordinate_y FLOAT,
+    annotation TEXT,
+    FOREIGN KEY (case_id) REFERENCES Cases(case_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Specimens (
+    specimen_id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT,
+    specimen_type VARCHAR(100),
+    date_retained DATE,
+    purpose TEXT,
+    FOREIGN KEY (case_id) REFERENCES Cases(case_id) ON DELETE CASCADE
+);
+
+CREATE TABLE Specimen_Investigations (
+    investigation_id INT AUTO_INCREMENT PRIMARY KEY,
+    specimen_id INT,
+    lab_name VARCHAR(255),
+    test_type VARCHAR(100) CHECK (test_type IN ('histology', 'serology', 'toxicology', 'other')),
+    result TEXT,
+    result_date DATE,
+    FOREIGN KEY (specimen_id) REFERENCES Specimens(specimen_id) ON DELETE CASCADE
+);
+
+-- REMAINING FROM SUBSYSTEM 5
+CREATE TABLE Case_Documents (
+    document_id INT AUTO_INCREMENT PRIMARY KEY,
+    case_id INT,
+    doc_type VARCHAR(100),
+    file_path VARCHAR(255),
+    uploaded_by INT,
+    upload_date DATETIME DEFAULT CURRENT_TIMESTAMP,
+    hash_checksum VARCHAR(256),
+    FOREIGN KEY (case_id) REFERENCES Cases(case_id) ON DELETE CASCADE,
+    FOREIGN KEY (uploaded_by) REFERENCES Users(user_id) ON DELETE SET NULL
+);
+
 -- VIEWS
--- --------------------------------------------------------
-
-CREATE VIEW pending_reports_view AS
+CREATE VIEW Case_Summary_View AS
 SELECT 
-    r.ReportID, 
-    c.CaseNumber, 
-    d.Name AS DoctorName, 
-    r.ExamDate, 
-    r.Status,
-    DATEDIFF(CURRENT_DATE, r.ExamDate) AS DaysPending
-FROM REPORT r
-JOIN `CASE` c ON r.CaseID = c.CaseID
-LEFT JOIN DOCTOR d ON r.DoctorID = d.DoctorID
-WHERE r.Status = 'pending' AND DATEDIFF(CURRENT_DATE, r.ExamDate) > 30;
+    c.case_id, 
+    c.inquest_no, 
+    c.court_case_no, 
+    c.status, 
+    c.opened_date,
+    ct.type_name,
+    cc.trial_date
+FROM Cases c
+LEFT JOIN Case_Types ct ON c.case_type_id = ct.case_type_id
+LEFT JOIN Court_Certificates cc ON c.case_id = cc.case_id;
 
-CREATE VIEW monthly_case_stats_view AS
-SELECT 
-    YEAR(IncidentDate) AS Year,
-    MONTH(IncidentDate) AS Month,
-    CaseType,
-    COUNT(*) AS TotalCases
-FROM `CASE`
-GROUP BY YEAR(IncidentDate), MONTH(IncidentDate), CaseType;
-
--- --------------------------------------------------------
--- TRIGGERS & PROCEDURES
--- --------------------------------------------------------
-
+-- TRIGGERS for Audit Log
+-- The triggers below capture basic INSERT/UPDATE/DELETE actions for the Cases table.
+-- They rely on MySQL user variables (@app_user_id, @app_ip_address) set by the application 
+-- right before executing a query to accurately capture user context in the audit log.
 DELIMITER //
 
--- Procedure: Create a Case and Patient in one transaction
-CREATE PROCEDURE CreatePatientAndCase (
-    IN p_FullName VARCHAR(255),
-    IN p_Address TEXT,
-    IN p_DOB DATE,
-    IN p_Age INT,
-    IN p_Sex ENUM('Male', 'Female', 'Other'),
-    IN p_NIC VARCHAR(20),
-    IN c_CaseNumber VARCHAR(50),
-    IN c_CaseType ENUM('clinical', 'autopsy'),
-    IN c_IncidentDate DATE,
-    IN c_IncidentLocation VARCHAR(255),
-    IN c_PoliceStation VARCHAR(100),
-    IN c_CourtName VARCHAR(100)
-)
-BEGIN
-    DECLARE new_patient_id INT;
-    DECLARE exit handler for sqlexception
-    BEGIN
-        ROLLBACK;
-    END;
-
-    START TRANSACTION;
-
-    INSERT INTO PATIENT (FullName, Address, DOB, Age, Sex, NIC)
-    VALUES (p_FullName, p_Address, p_DOB, p_Age, p_Sex, p_NIC);
-    
-    SET new_patient_id = LAST_INSERT_ID();
-
-    INSERT INTO `CASE` (PatientID, CaseNumber, CaseType, IncidentDate, IncidentLocation, PoliceStation, CourtName)
-    VALUES (new_patient_id, c_CaseNumber, c_CaseType, c_IncidentDate, c_IncidentLocation, c_PoliceStation, c_CourtName);
-
-    COMMIT;
-END //
-
--- Triggers for Audit Logging (Examples on REPORT table)
-CREATE TRIGGER after_report_insert
-AFTER INSERT ON REPORT
+CREATE TRIGGER trg_cases_insert AFTER INSERT ON Cases
 FOR EACH ROW
 BEGIN
-    -- Normally we'd use connection variables (@current_user_id) to log who did it
-    INSERT INTO AUDIT_LOG (TableName, Operation, RecordID, Details)
-    VALUES ('REPORT', 'INSERT', NEW.ReportID, CONCAT('New report added for CaseID: ', NEW.CaseID));
-END //
+    INSERT INTO Audit_Log (user_id, table_name, record_id, action, ip_address, new_value)
+    VALUES (
+        @app_user_id, 
+        'Cases', 
+        NEW.case_id, 
+        'INSERT', 
+        @app_ip_address, 
+        JSON_OBJECT('case_type_id', NEW.case_type_id, 'inquest_no', NEW.inquest_no, 'court_case_no', NEW.court_case_no, 'status', NEW.status, 'opened_date', NEW.opened_date)
+    );
+END//
 
-CREATE TRIGGER after_report_update
-AFTER UPDATE ON REPORT
+CREATE TRIGGER trg_cases_update AFTER UPDATE ON Cases
 FOR EACH ROW
 BEGIN
-    INSERT INTO AUDIT_LOG (TableName, Operation, RecordID, Details)
-    VALUES ('REPORT', 'UPDATE', NEW.ReportID, CONCAT('Report status updated to: ', NEW.Status));
-END //
+    INSERT INTO Audit_Log (user_id, table_name, record_id, action, ip_address, old_value, new_value)
+    VALUES (
+        @app_user_id, 
+        'Cases', 
+        NEW.case_id, 
+        'UPDATE', 
+        @app_ip_address,
+        JSON_OBJECT('case_type_id', OLD.case_type_id, 'inquest_no', OLD.inquest_no, 'court_case_no', OLD.court_case_no, 'status', OLD.status, 'opened_date', OLD.opened_date),
+        JSON_OBJECT('case_type_id', NEW.case_type_id, 'inquest_no', NEW.inquest_no, 'court_case_no', NEW.court_case_no, 'status', NEW.status, 'opened_date', NEW.opened_date)
+    );
+END//
 
--- Note regarding the 30-day pending report notification trigger:
--- Standard MySQL triggers execute on INSERT, UPDATE, or DELETE operations. 
--- They cannot "wake up" after 30 days.
--- Instead, the `pending_reports_view` fulfills the system's ability to check for these 
--- reports. A notification can be raised by the application logic polling this view,
--- or by adding an EVENT (scheduled task) in MySQL that queries the view daily.
-CREATE EVENT check_pending_reports
-ON SCHEDULE EVERY 1 DAY
-STARTS CURRENT_TIMESTAMP
-DO
+CREATE TRIGGER trg_cases_delete AFTER DELETE ON Cases
+FOR EACH ROW
 BEGIN
-    -- Logic to push notification, usually application layer handles emailing / UI alerts
-    -- based on the pending_reports_view. This event acts as a placeholder for DB-level jobs.
-END //
+    INSERT INTO Audit_Log (user_id, table_name, record_id, action, ip_address, old_value)
+    VALUES (
+        @app_user_id, 
+        'Cases', 
+        OLD.case_id, 
+        'DELETE', 
+        @app_ip_address,
+        JSON_OBJECT('case_type_id', OLD.case_type_id, 'inquest_no', OLD.inquest_no, 'court_case_no', OLD.court_case_no, 'status', OLD.status, 'opened_date', OLD.opened_date)
+    );
+END//
 
 DELIMITER ;
