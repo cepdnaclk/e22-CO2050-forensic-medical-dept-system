@@ -8,6 +8,7 @@ import FormSection from '../../components/shared/FormSection';
 import StickyActionBar from '../../components/shared/StickyActionBar';
 import { useAuth, ROLES } from '../../contexts/AuthContext';
 import { autopsyNotifications, medicalOfficers } from '../../data/mockData';
+import { examinationService } from '../../services/api';
 
 const ic = (err) => `w-full px-3 py-2 border rounded text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#1e3a5f] focus:border-[#1e3a5f] ${err ? 'border-red-400 bg-red-50' : 'border-gray-300'}`;
 const roIc = 'w-full px-3 py-2 border border-gray-200 rounded text-sm text-gray-600 bg-[#f8fafc] cursor-not-allowed';
@@ -105,10 +106,47 @@ export default function AutopsyNotificationForm() {
     setErrors(e);
     if (Object.keys(e).length > 0) return;
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setIsSubmitting(false);
-    setSuccess(true);
-    setTimeout(() => navigate(`/cases/${caseId}`), 1500);
+    try {
+      await examinationService.createAutopsyNotification({
+        case_id: parseInt(caseId) || null,
+        pm_serial_no: form.pmSerialNo,
+        hospital_name: form.hospitalName || null,
+        inquirer_name: form.inquirerName || null,
+        inquirer_designation: form.inquirerTypes.join(', ') || null,
+        court_case_no: form.courtCaseNo || null,
+        inquest_no: form.inquestNo || null,
+        name_of_deceased: form.deceasedName || null,
+        age: parseInt(form.deceasedAge) || null,
+        sex: form.deceasedSex || null,
+        date_of_death: `${form.deathYY1}${form.deathYY2}-${form.deathMM}-${form.deathDD}` || null,
+        time_of_death: `${form.deathHH}:${form.deathMin} ${form.deathAMPM}` || null,
+        place_of_death: form.placeOfDeath || null,
+        hospital_of_death: form.hospitalOfDeath || null,
+        bht_number: form.bhtNo || null,
+        ward: form.wardNo || null,
+        cause_of_death: {
+          immediate: form.causeImmediate, antecedentB: form.causeAntecedentB,
+          antecedentC: form.causeAntecedentC, antecedentD: form.causeAntecedentD,
+          contributory: form.causeContributory, approximateInterval: form.causeIntervalIa
+        },
+        under_investigation: form.underInvestigation,
+        specimens_retained: form.specimensRetained,
+        specimens_list: form.specimensList || null,
+        maternal_death: form.maternalDeath,
+        maternal_type: form.maternalType || null,
+        comments: `1. ${form.comment1}\n2. ${form.comment2}`,
+        conducted_by_name: form.conductedByName || null,
+        conducted_by_designation: form.conductedByDesignation || null,
+        conducted_date: `${form.conductedYY1}${form.conductedYY2}-${form.conductedMM}-${form.conductedDD}` || null,
+        tentative_report_time: form.tentativeReportTime || null,
+      });
+      setSuccess(true);
+      setTimeout(() => navigate(`/cases/${caseId}`), 1500);
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, submit: err.response?.data?.detail || err.message || 'Failed to save notification.' }));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSaveDraft = async () => {
@@ -140,7 +178,13 @@ export default function AutopsyNotificationForm() {
 
       {success && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-sm text-green-700">
-          <CheckCircle className="h-4 w-4" /> Autopsy notification saved.
+          <CheckCircle className="h-4 w-4" /> Action completed successfully.
+        </div>
+      )}
+      
+      {errors.submit && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded flex items-center gap-2 text-sm text-red-700">
+          {errors.submit}
         </div>
       )}
 

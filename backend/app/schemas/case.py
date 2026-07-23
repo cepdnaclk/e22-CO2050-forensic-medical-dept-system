@@ -22,6 +22,11 @@ class DeceasedPersonBase(BaseModel):
     sex: Optional[str] = None
     address: Optional[str] = None
     date_of_death: Optional[date] = None
+    time_of_death: Optional[str] = None
+    place_of_death: Optional[str] = None
+    hospital_name: Optional[str] = None
+    ward: Optional[str] = None
+    bht_no: Optional[str] = None
 
 class DeceasedPersonCreate(DeceasedPersonBase):
     case_id: int
@@ -40,6 +45,11 @@ class InjuredPersonBase(BaseModel):
     sex: Optional[str] = None
     address: Optional[str] = None
     date_of_incident: Optional[date] = None
+    time_of_incident: Optional[str] = None
+    place_of_incident: Optional[str] = None
+    hospital_name: Optional[str] = None
+    ward: Optional[str] = None
+    bht_no: Optional[str] = None
 
 class InjuredPersonCreate(InjuredPersonBase):
     case_id: int

@@ -8,6 +8,7 @@ import FormSection from '../../components/shared/FormSection';
 import StepIndicator from '../../components/shared/StepIndicator';
 import { useAuth, ROLES } from '../../contexts/AuthContext';
 import { postMortemReports, cases, courts, medicalOfficers } from '../../data/mockData';
+import { examinationService } from '../../services/api';
 
 const STEPS = ['Header', 'External Exam', 'Identification', 'Internal (Head)', 'Internal (Abdomen)', 'Opinion'];
 const ic = (err) => `w-full px-3 py-2 border rounded text-sm text-gray-900 focus:outline-none focus:ring-1 focus:ring-[#1e3a5f] focus:border-[#1e3a5f] ${err ? 'border-red-400 bg-red-50' : 'border-gray-300'}`;
@@ -159,10 +160,37 @@ export default function PostMortemFormPage() {
     setErrors(e);
     if (Object.keys(e).length > 0) { setCurrentStep(Object.keys(e).includes('causeOfDeath') || Object.keys(e).includes('pmSerialNo') ? 6 : 1); return; }
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setIsSubmitting(false);
-    setSuccess(true);
-    setTimeout(() => navigate(caseId ? `/cases/${caseId}` : '/postmortems'), 1500);
+    try {
+      await examinationService.createPostMortem({
+        case_id: parseInt(form.selectedCaseId) || null,
+        pm_number: form.pmSerialNo,
+        examination_date: form.examDate || null,
+        examination_time: form.examTime || null,
+        name_of_deceased: form.deceasedName || null,
+        age: parseInt(form.estimatedAge) || null,
+        sex: form.sex || null,
+        magistrate_order_date: form.reportDate || null,
+        magistrate_court: form.court || null,
+        police_station: form.requestedBy || null,
+        identifiers: form.identifiers || null,
+        external_exam: {
+          locus: form.locus, clothing: form.clothing, nourishment: form.nourishment,
+          colour: form.colour, marks: form.marks, productsOfDisease: form.productsOfDisease,
+          injuries: form.injuries
+        },
+        internal_exam_head: { neck: form.neck, softParts: form.headSoftParts, bonesOfSkull: form.headBones, membranes: form.headMembranes, brain: form.headBrain, vessels: form.headBloodVessels, spinalCord: form.spinalCord },
+        internal_exam_neck: { mouth: form.mouthPharynx, larynx: form.larynxTrachea },
+        internal_exam_chest: { softParts: form.thoraxSoftParts, bones: form.thoraxBones, cavity: form.thoraxChestCavity, pericardium: form.thoraxPericardium, heart: form.heartWeight, lungs: form.lungsWeight },
+        internal_exam_abdomen: { cavity: form.abdomenCavity, stomach: form.stomach, intestines: form.intestines, liver: form.liverWeight, pancreas: form.pancreas, spleen: form.spleenWeight, kidneys: form.kidneysWeight, bladder: form.bladder, reproductive: form.reproductive },
+        cause_of_death: { cause: form.causeOfDeath, opinion: form.opinionText },
+      });
+      setSuccess(true);
+      setTimeout(() => navigate(caseId ? `/cases/${caseId}` : '/postmortems'), 1500);
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, submit: err.response?.data?.detail || err.message || 'Failed to save PM report.' }));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const field = (label, key, type = 'text', opts = {}) => {
@@ -185,7 +213,13 @@ export default function PostMortemFormPage() {
 
       {success && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-sm text-green-700">
-          <CheckCircle className="h-4 w-4" /> Post-Mortem report saved successfully.
+          <CheckCircle className="h-4 w-4" /> Action completed successfully.
+        </div>
+      )}
+      
+      {errors.submit && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded flex items-center gap-2 text-sm text-red-700">
+          {errors.submit}
         </div>
       )}
 

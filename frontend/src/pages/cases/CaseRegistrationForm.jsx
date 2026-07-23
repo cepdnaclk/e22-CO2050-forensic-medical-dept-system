@@ -8,6 +8,7 @@ import {
   CASE_TYPES, CASE_STATUSES, medicalOfficers, policeStations,
   policeOfficers, courts, magistrates
 } from '../../data/mockData';
+import { caseService } from '../../services/api';
 
 export default function CaseRegistrationForm() {
   const navigate = useNavigate();
@@ -67,11 +68,24 @@ export default function CaseRegistrationForm() {
     e.preventDefault();
     if (!validate()) return;
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
-    setSuccess(true);
-    setTimeout(() => navigate('/cases'), 1500);
+    try {
+      await caseService.createCase({
+        case_number: form.inquestNo,
+        opened_date: form.openedDate,
+        status: form.status.toUpperCase(),
+        case_type_id: parseInt(form.caseType) || null,
+        assigned_jmo_id: parseInt(form.assignedJMO) || null,
+        police_station_id: parseInt(form.policeStation) || null,
+        court_id: parseInt(form.court) || null,
+        court_case_no: form.courtCaseNo || null
+      });
+      setSuccess(true);
+      setTimeout(() => navigate('/cases'), 1500);
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, submit: err.response?.data?.detail || err.message || 'Failed to register case.' }));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -88,6 +102,12 @@ export default function CaseRegistrationForm() {
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-sm text-green-700">
           <CheckCircle className="h-4 w-4" />
           Case registered successfully. Redirecting...
+        </div>
+      )}
+      
+      {errors.submit && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded flex items-center gap-2 text-sm text-red-700">
+          {errors.submit}
         </div>
       )}
 

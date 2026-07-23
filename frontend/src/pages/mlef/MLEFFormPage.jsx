@@ -10,6 +10,7 @@ import { useAuth, ROLES } from '../../contexts/AuthContext';
 import {
   policeStations, mlefForms, cases, hospitals,
 } from '../../data/mockData';
+import { examinationService } from '../../services/api';
 
 /* ─── helpers ─── */
 const ic = (err) =>
@@ -164,10 +165,49 @@ export default function MLEFFormPage() {
   const handleSubmit = async () => {
     if (!validate()) return;
     setIsSubmitting(true);
-    await new Promise((r) => setTimeout(r, 1000));
-    setIsSubmitting(false);
-    setSuccess(true);
-    setTimeout(() => navigate(caseId ? `/cases/${caseId}` : '/mlefs'), 1500);
+    try {
+      await examinationService.createMlef({
+        case_id: parseInt(form.selectedCaseId),
+        police_station: form.policeStation || null,
+        date_of_issue: form.dateOfIssue || null,
+        officer_name: form.policeOfficerName || null,
+        officer_number: form.policeOfficerRegNo || null,
+        examinee_name: form.examineeName || null,
+        examinee_age: parseInt(form.examineeAge) || null,
+        examinee_gender: form.examineeSex || null,
+        examinee_address: form.examineeAddress || null,
+        date_of_incident: form.dateOfIncident || null,
+        time_of_incident: form.timeOfIncident || null,
+        place_of_incident: form.placeOfIncident || null,
+        nature_of_incident: form.natureOfIncident || null,
+        weapon_used: JSON.stringify(form.weaponTypes || []),
+        police_history: form.policeHistory || null,
+        patient_history: form.patientHistory || null,
+        consent: form.consent === 'Yes',
+        bht_number: form.bhtNo || null,
+        ward: form.wardNo || null,
+        general_exam_clothing: form.generalExamClothing || null,
+        general_exam_physique: form.generalExamPhysique || null,
+        general_exam_mental: form.generalExamMental || null,
+        general_exam_other: form.generalExamOther || null,
+        alcohol_smell: form.alcoholSmell || null,
+        alcohol_pupils: form.alcoholPupils || null,
+        alcohol_speech: form.alcoholSpeech || null,
+        sexual_assault_history: form.sexualAssaultHistory || null,
+        sexual_assault_exam: form.sexualAssaultExam || null,
+        short_report: JSON.stringify(form.bodilyHarm || {}),
+        category_of_hurt: form.categoryOfHurt || null,
+        jmo_name: form.doctorName || null,
+        jmo_designation: form.doctorDesignation || null,
+        jmo_date: form.dateOfReport || null,
+      });
+      setSuccess(true);
+      setTimeout(() => navigate(caseId ? `/cases/${caseId}` : '/mlefs'), 1500);
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, submit: err.response?.data?.detail || err.message || 'Failed to save MLEF.' }));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleSaveDraft = async () => {
@@ -206,7 +246,12 @@ export default function MLEFFormPage() {
 
       {success && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-sm text-green-700">
-          <CheckCircle className="h-4 w-4" /> MLEF form saved successfully.
+          <CheckCircle className="h-4 w-4" /> Action completed successfully.
+        </div>
+      )}
+      {errors.submit && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded flex items-center gap-2 text-sm text-red-700">
+          {errors.submit}
         </div>
       )}
 
