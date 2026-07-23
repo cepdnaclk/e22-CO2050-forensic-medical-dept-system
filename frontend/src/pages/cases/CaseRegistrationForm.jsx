@@ -9,7 +9,6 @@ import {
   CASE_TYPES, CASE_STATUSES, medicalOfficers, policeStations,
   policeOfficers, courts, magistrates
 } from '../../data/mockData';
-import { caseService } from '../../services/api';
 
 export default function CaseRegistrationForm() {
   const navigate = useNavigate();
