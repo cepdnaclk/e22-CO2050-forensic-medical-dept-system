@@ -119,9 +119,13 @@ CREATE TABLE Deceased_Persons (
     sex               VARCHAR(20)  CHECK (sex IN ('Male', 'Female', 'Other', 'Unknown')),
     address           TEXT,
     date_of_admission DATE,
-    date_of_death     DATE,
-    place_of_death    VARCHAR(255),
-    CHECK (date_of_death >= date_of_admission OR date_of_admission IS NULL OR date_of_death IS NULL),
+    date_of_death DATE,
+    time_of_death TIME,
+    place_of_death VARCHAR(255),
+    hospital_name VARCHAR(255),
+    ward VARCHAR(100),
+    bht_no VARCHAR(100),
+    CHECK (date_of_death >= date_of_admission),
     FOREIGN KEY (case_id) REFERENCES Cases(case_id) ON DELETE RESTRICT
 );
 
@@ -134,6 +138,12 @@ CREATE TABLE Injured_Persons (
     sex               VARCHAR(20) CHECK (sex IN ('Male', 'Female', 'Other', 'Unknown')),
     address           TEXT,
     date_of_admission DATE,
+    date_of_incident DATE,
+    time_of_incident TIME,
+    place_of_incident VARCHAR(255),
+    hospital_name VARCHAR(255),
+    ward VARCHAR(100),
+    bht_no VARCHAR(100),
     FOREIGN KEY (case_id) REFERENCES Cases(case_id) ON DELETE RESTRICT
 );
 

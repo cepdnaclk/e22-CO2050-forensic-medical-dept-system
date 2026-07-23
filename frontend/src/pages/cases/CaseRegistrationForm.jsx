@@ -9,6 +9,7 @@ import {
   CASE_TYPES, CASE_STATUSES, medicalOfficers, policeStations,
   policeOfficers, courts, magistrates
 } from '../../data/mockData';
+import { caseService } from '../../services/api';
 
 export default function CaseRegistrationForm() {
   const navigate = useNavigate();
@@ -67,30 +68,21 @@ export default function CaseRegistrationForm() {
     e.preventDefault();
     if (!validate()) return;
     setIsSubmitting(true);
-    setApiError('');
     try {
-      // Map frontend form fields to backend API field names
       await caseService.createCase({
-        case_number: form.inquestNo.trim(),   // inquest_no is used as the unique case number
-        court_case_no: form.courtCaseNo.trim() || null,
+        case_number: form.inquestNo,
         opened_date: form.openedDate,
         status: form.status.toUpperCase(),
-        case_type_id: form.caseType ? parseInt(form.caseType) : null,
-        assigned_jmo_id: form.assignedJMO ? parseInt(form.assignedJMO) : null,
-        police_station_id: form.policeStation ? parseInt(form.policeStation) : null,
-        court_id: form.court ? parseInt(form.court) : null,
+        case_type_id: parseInt(form.caseType) || null,
+        assigned_jmo_id: parseInt(form.assignedJMO) || null,
+        police_station_id: parseInt(form.policeStation) || null,
+        court_id: parseInt(form.court) || null,
+        court_case_no: form.courtCaseNo || null
       });
       setSuccess(true);
       setTimeout(() => navigate('/cases'), 1500);
     } catch (err) {
-      const detail = err?.response?.data?.detail;
-      if (typeof detail === 'string') {
-        setApiError(detail);
-      } else if (Array.isArray(detail)) {
-        setApiError(detail.map(d => d.msg).join(', '));
-      } else {
-        setApiError('Failed to register case. Check that the backend is running.');
-      }
+      setErrors((prev) => ({ ...prev, submit: err.response?.data?.detail || err.message || 'Failed to register case.' }));
     } finally {
       setIsSubmitting(false);
     }
@@ -117,6 +109,12 @@ export default function CaseRegistrationForm() {
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-sm text-green-700">
           <CheckCircle className="h-4 w-4" />
           Case registered successfully. Redirecting...
+        </div>
+      )}
+      
+      {errors.submit && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded flex items-center gap-2 text-sm text-red-700">
+          {errors.submit}
         </div>
       )}
 

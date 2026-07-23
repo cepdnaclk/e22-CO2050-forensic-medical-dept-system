@@ -1,7 +1,8 @@
 // src/pages/persons/InjuredPersonForm.jsx
 import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 import { Save, Loader2, CheckCircle } from 'lucide-react';
+import { caseService } from '../../services/api';
 import PageHeader from '../../components/shared/PageHeader';
 import FormSection from '../../components/shared/FormSection';
 import { hospitals, wards } from '../../data/mockData';
@@ -10,6 +11,7 @@ const CURRENT_STATUSES = ['Admitted', 'Under Observation', 'Discharged', 'Transf
 
 export default function InjuredPersonForm() {
   const navigate = useNavigate();
+  const { id: caseId } = useParams();
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState({});
@@ -53,10 +55,27 @@ export default function InjuredPersonForm() {
     e.preventDefault();
     if (!validate()) return;
     setIsSubmitting(true);
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
-    setSuccess(true);
-    setTimeout(() => navigate('/cases'), 1500);
+    try {
+      await caseService.addInjured(caseId, {
+        full_name: form.fullName,
+        nic: form.nicNo || null,
+        age: parseInt(form.age) || null,
+        sex: form.sex || null,
+        address: form.address || null,
+        date_of_incident: form.dateOfIncident || null,
+        time_of_incident: form.timeOfIncident || null,
+        place_of_incident: form.placeOfIncident || null,
+        hospital_name: showHospitalFields ? form.hospitalName : null,
+        ward: showHospitalFields ? form.ward : null,
+        bht_no: showHospitalFields ? form.bhtNo : null,
+      });
+      setSuccess(true);
+      setTimeout(() => navigate('/cases'), 1500);
+    } catch (err) {
+      setErrors((prev) => ({ ...prev, submit: err.response?.data?.detail || err.message || 'Failed to save record.' }));
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -72,7 +91,14 @@ export default function InjuredPersonForm() {
 
       {success && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-sm text-green-700">
-          <CheckCircle className="h-4 w-4" /> Injured person record saved successfully.
+          <CheckCircle className="h-4 w-4" />
+          Injured person record saved successfully.
+        </div>
+      )}
+
+      {errors.submit && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded flex items-center gap-2 text-sm text-red-700">
+          {errors.submit}
         </div>
       )}
 
