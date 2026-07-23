@@ -76,12 +76,45 @@ The system is built as a three-tier web application:
 
 ## Database Design
 
-The system uses a relational PostgreSQL database with 14 tables
-covering all entities in the forensic medical workflow:
+The system uses a relational PostgreSQL database organised 
+into five subsystems with 27 tables:
 
-DEPARTMENT, DOCTOR, PATIENT, CASE_RECORD, POSTMORTEM_REPORT,
-MLEF, MEDICO_LEGAL_REPORT, AUTOPSY_NOTIFICATION, POLICE_REQUEST,
-COURT_SUMMONS, COURT_RECEIPT, SPECIMEN, INVESTIGATION, AUDIT_LOG
+**Case & Persons**
+- Cases
+- Case_Types
+- Deceased_Persons
+- Injured_Persons
+
+**Institutions & Personnel**
+- Hospitals
+- Wards
+- Police_Stations
+- Police_Officers
+- Courts
+- Magistrates
+- Medical_Officers
+
+**Examination & Autopsy Records**
+- Autopsy_Notifications
+- PostMortem_Reports
+- PostMortem_Findings
+- MLEF_Forms
+- Court_Certificates
+
+**Injuries & Forensic Detail**
+- Injuries
+- Injury_Causes
+- Body_Diagram_Marks
+- Specimens
+- Specimen_Investigations
+
+**System Administration**
+- Users
+- Roles
+- User_Roles
+- Permissions
+- Case_Documents
+- Audit_Log
 
 ---
 
@@ -89,10 +122,11 @@ COURT_SUMMONS, COURT_RECEIPT, SPECIMEN, INVESTIGATION, AUDIT_LOG
 
 | Role | Access |
 |---|---|
-| Medical Officer | Clinical modules — MLEF, Post-Mortem, Forensic Reports |
-| Administrative Staff | Case registration, court dispatch, police requests |
-| Police Liaison Officer | Submit requests, track report status |
-| DBA | Full system access, user management, audit log |
+| Administrator | Full system access, user management, audit log, configuration |
+| Judicial Medical Officer (JMO) | Clinical modules — MLEF, Post-Mortem, Forensic Reports |
+| Police Officer | Submit MLEF requests, track report status for station cases |
+| Registrar | Court certificates, summons, certificates of receipt |
+| Records Clerk | Case registration, document uploads, intake queue management |
 
 ---
 
