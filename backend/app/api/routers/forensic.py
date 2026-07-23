@@ -3,15 +3,19 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from app import crud, models, schemas
 from app.api import deps
+from app.api.deps import RoleChecker
 
 router = APIRouter()
+
+allow_read = RoleChecker(["Admin", "Auditor", "Registrar", "JMO", "Police"])
+allow_write = RoleChecker(["Admin", "JMO", "Police"])
 
 @router.get("/specimens", response_model=List[schemas.forensic.Specimen])
 def read_specimens(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: models.system.User = Depends(allow_read),
 ) -> Any:
     """Retrieve specimens."""
     specimens = crud.specimen.get_multi(db, skip=skip, limit=limit)
@@ -22,7 +26,7 @@ def create_specimen(
     *,
     db: Session = Depends(deps.get_db),
     specimen_in: schemas.forensic.SpecimenCreate,
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: models.system.User = Depends(allow_write),
 ) -> Any:
     """Create new specimen."""
     specimen_obj = crud.specimen.create(db, obj_in=specimen_in)
@@ -32,7 +36,7 @@ def create_specimen(
 def read_specimen(
     specimen_id: int,
     db: Session = Depends(deps.get_db),
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: models.system.User = Depends(allow_read),
 ) -> Any:
     """Get specimen by ID."""
     specimen_obj = crud.specimen.get(db, id=specimen_id)
@@ -45,7 +49,7 @@ def add_investigation(
     specimen_id: int,
     investigation_in: schemas.forensic.SpecimenInvestigationCreate,
     db: Session = Depends(deps.get_db),
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: models.system.User = Depends(allow_write),
 ) -> Any:
     """Add investigation to specimen."""
     investigation_in.specimen_id = specimen_id
@@ -57,7 +61,7 @@ def read_injuries(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: models.system.User = Depends(allow_read),
 ) -> Any:
     """Retrieve injuries."""
     injuries = crud.injury.get_multi(db, skip=skip, limit=limit)
@@ -68,7 +72,7 @@ def create_injury(
     *,
     db: Session = Depends(deps.get_db),
     injury_in: schemas.forensic.InjuryCreate,
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: models.system.User = Depends(allow_write),
 ) -> Any:
     """Create new injury."""
     injury_obj = crud.injury.create(db, obj_in=injury_in)

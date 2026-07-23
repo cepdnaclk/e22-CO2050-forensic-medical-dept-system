@@ -9,7 +9,7 @@ const ROLES = {
   RECEPTIONIST: 'Receptionist'
 };
 // Removed mockAuth.js import
-import { jwtDecode } from 'jwt-decode'; // need to install this or parse manually. I'll parse manually.
+// using manual parseJwt instead of jwt-decode
 
 function parseJwt(token) {
     try {

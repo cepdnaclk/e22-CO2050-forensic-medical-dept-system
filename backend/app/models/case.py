@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, Enum, CheckConstraint
 from sqlalchemy.orm import relationship
 import enum
 
@@ -46,6 +46,11 @@ class DeceasedPerson(Base):
     address = Column(String)
     date_of_death = Column(Date)
     
+    __table_args__ = (
+        CheckConstraint('age >= 0', name='check_age_positive'),
+        CheckConstraint("sex IN ('M', 'F', 'Other')", name='check_sex_valid'),
+    )
+    
     case = relationship("Case", back_populates="deceased_persons")
 
 class InjuredPerson(Base):
@@ -58,5 +63,10 @@ class InjuredPerson(Base):
     sex = Column(String)
     address = Column(String)
     date_of_incident = Column(Date)
+    
+    __table_args__ = (
+        CheckConstraint('age >= 0', name='check_injured_age_positive'),
+        CheckConstraint("sex IN ('M', 'F', 'Other')", name='check_injured_sex_valid'),
+    )
     
     case = relationship("Case", back_populates="injured_persons")

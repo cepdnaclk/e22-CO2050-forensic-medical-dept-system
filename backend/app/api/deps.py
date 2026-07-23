@@ -40,9 +40,34 @@ def get_current_user(
         raise credentials_exception
     return user
 
+from app.core.context import current_user_id
+
 def get_current_active_user(
     current_user: User = Depends(get_current_user),
 ) -> User:
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
+    
+    # Set context var for audit logging
+    current_user_id.set(current_user.id)
     return current_user
+
+class RoleChecker:
+    def __init__(self, allowed_roles: list):
+        self.allowed_roles = allowed_roles
+
+    def __call__(self, user: User = Depends(get_current_active_user)) -> User:
+        user_role_names = [role.name for role in user.roles]
+        
+        # Admin bypasses all checks
+        if "Admin" in user_role_names:
+            return user
+            
+        for role in self.allowed_roles:
+            if role in user_role_names:
+                return user
+                
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail=f"Operation not permitted. Requires one of: {', '.join(self.allowed_roles)}"
+        )
