@@ -70,15 +70,22 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Institutional Header */}
-      <div className="bg-[#1e3a5f] py-6">
-        <div className="max-w-lg mx-auto text-center px-4">
-          <div className="inline-flex items-center justify-center h-14 w-14 bg-white/20 rounded-lg mb-3">
-            <span className="text-white text-xl font-bold">FM</span>
+      <div
+        className="py-12 relative bg-[#1e3a5f]"
+        style={{
+          backgroundImage: `linear-gradient(to bottom, rgba(30, 58, 95, 0.5), rgba(30, 58, 95, 0.75)), url('/images/landscape.jpg')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        <div className="max-w-lg mx-auto text-center px-4 relative z-10">
+          <div className="inline-flex items-center justify-center h-28 w-28 mb-4 bg-white rounded-full shadow-lg ring-4 ring-white/20 overflow-hidden">
+            <img src="/images/logo.jpg" alt="University Logo" className="h-full w-full object-cover scale-[1.10]" />
           </div>
-          <h1 className="text-white text-lg font-semibold">
+          <h1 className="text-white text-2xl font-bold tracking-wide">
             Department of Forensic Medicine
           </h1>
-          <p className="text-white/70 text-sm mt-1">
+          <p className="text-white/80 text-sm mt-2 font-medium uppercase tracking-wider">
             Faculty of Medicine, University of Peradeniya
           </p>
         </div>
@@ -195,35 +202,35 @@ export default function LoginPage() {
           <div className="mt-4 p-4 bg-gray-100 border border-gray-200 rounded-lg shadow-sm">
             <p className="text-xs font-semibold text-gray-600 uppercase tracking-wider mb-3 text-center">Development Quick Login</p>
             <div className="flex flex-wrap gap-2 justify-center">
-              <button 
+              <button
                 onClick={() => handleQuickLogin('admin', 'admin123', '123456')}
                 className="px-3 py-1.5 bg-blue-100 hover:bg-blue-200 text-blue-700 text-xs font-medium rounded border border-blue-200 transition-colors"
                 type="button"
               >
                 Admin
               </button>
-              <button 
+              <button
                 onClick={() => handleQuickLogin('dr.wickramasinghe', 'jmo123', '123456')}
                 className="px-3 py-1.5 bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-medium rounded border border-emerald-200 transition-colors"
                 type="button"
               >
                 JMO
               </button>
-              <button 
+              <button
                 onClick={() => handleQuickLogin('registrar.kandy', 'reg123', '')}
                 className="px-3 py-1.5 bg-purple-100 hover:bg-purple-200 text-purple-700 text-xs font-medium rounded border border-purple-200 transition-colors"
                 type="button"
               >
                 Registrar
               </button>
-              <button 
+              <button
                 onClick={() => handleQuickLogin('si.perera', 'police123', '')}
                 className="px-3 py-1.5 bg-amber-100 hover:bg-amber-200 text-amber-700 text-xs font-medium rounded border border-amber-200 transition-colors"
                 type="button"
               >
                 Police
               </button>
-              <button 
+              <button
                 onClick={() => handleQuickLogin('clerk.fernando', 'clerk123', '')}
                 className="px-3 py-1.5 bg-slate-200 hover:bg-slate-300 text-slate-700 text-xs font-medium rounded border border-slate-300 transition-colors"
                 type="button"
