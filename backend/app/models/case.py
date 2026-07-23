@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Date, ForeignKey, Enum, CheckConstraint
+from app.core.encryption import EncryptedString
 from sqlalchemy.orm import relationship
 import enum
 
@@ -40,7 +41,7 @@ class DeceasedPerson(Base):
     id = Column(Integer, primary_key=True, index=True)
     case_id = Column(Integer, ForeignKey("cases.id"))
     full_name = Column(String, nullable=False)
-    nic = Column(String)
+    nic = Column(EncryptedString)
     age = Column(Integer)
     sex = Column(String)
     address = Column(String)
@@ -58,7 +59,7 @@ class InjuredPerson(Base):
     id = Column(Integer, primary_key=True, index=True)
     case_id = Column(Integer, ForeignKey("cases.id"))
     full_name = Column(String, nullable=False)
-    nic = Column(String)
+    nic = Column(EncryptedString)
     age = Column(Integer)
     sex = Column(String)
     address = Column(String)

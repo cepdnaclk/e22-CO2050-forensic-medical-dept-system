@@ -40,16 +40,23 @@ def get_current_user(
         raise credentials_exception
     return user
 
+from sqlalchemy.orm import Session
+from sqlalchemy import text
 from app.core.context import current_user_id
 
 def get_current_active_user(
     current_user: User = Depends(get_current_user),
+    db: Session = Depends(get_db)
 ) -> User:
     if not current_user.is_active:
         raise HTTPException(status_code=400, detail="Inactive user")
     
-    # Set context var for audit logging
+    # Set context var for Python application-level audit logging
     current_user_id.set(current_user.id)
+    
+    # Set Postgres transaction-local variable for native DB triggers
+    db.execute(text("SET LOCAL app.current_user_id = :id"), {"id": current_user.id})
+    
     return current_user
 
 class RoleChecker:

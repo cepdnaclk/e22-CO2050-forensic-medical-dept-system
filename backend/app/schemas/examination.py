@@ -114,7 +114,8 @@ class AutopsyNotificationBase(BaseModel):
     ward_no: Optional[str] = None
     date_of_death: Optional[date] = None
     time_of_death: Optional[str] = None
-    cause_of_death: Optional[Any] = None
+    cause_of_death_immediate: Optional[str] = None
+    cause_of_death_antecedent: Optional[str] = None
     under_investigation: Optional[bool] = None
     specimens_retained: Optional[bool] = None
     specimens_list: Optional[str] = None

@@ -1,4 +1,5 @@
 from sqlalchemy import Column, Integer, String, Date, DateTime, Boolean, ForeignKey, JSON
+from app.core.encryption import EncryptedString
 from sqlalchemy.orm import relationship
 from datetime import datetime
 
@@ -27,7 +28,9 @@ class AutopsyNotification(Base):
     date_of_death = Column(Date)
     time_of_death = Column(String)
     
-    cause_of_death = Column(JSON) # e.g. {"immediate": "...", "approximateInterval": "..."}
+    # Store immediate and antecedent as encrypted strings instead of plain JSON
+    cause_of_death_immediate = Column(EncryptedString)
+    cause_of_death_antecedent = Column(EncryptedString)
     
     under_investigation = Column(Boolean)
     specimens_retained = Column(Boolean)
