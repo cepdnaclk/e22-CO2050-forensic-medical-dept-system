@@ -11,7 +11,7 @@ def read_hospitals(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: Dict[str, Any] = Depends(deps.get_current_active_user),
 ) -> Any:
     """Retrieve hospitals."""
     hospitals = crud.hospital.get_multi(db, skip=skip, limit=limit)
@@ -22,7 +22,7 @@ def create_hospital(
     *,
     db: Session = Depends(deps.get_db),
     hospital_in: schemas.institution.HospitalCreate,
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: Dict[str, Any] = Depends(deps.get_current_active_user),
 ) -> Any:
     """Create new hospital."""
     hospital = crud.hospital.create(db, obj_in=hospital_in)
@@ -33,7 +33,7 @@ def read_police_stations(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: Dict[str, Any] = Depends(deps.get_current_active_user),
 ) -> Any:
     """Retrieve police stations."""
     stations = crud.police_station.get_multi(db, skip=skip, limit=limit)
@@ -44,7 +44,7 @@ def create_police_station(
     *,
     db: Session = Depends(deps.get_db),
     station_in: schemas.institution.PoliceStationCreate,
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: Dict[str, Any] = Depends(deps.get_current_active_user),
 ) -> Any:
     """Create new police station."""
     station = crud.police_station.create(db, obj_in=station_in)
@@ -55,7 +55,7 @@ def read_courts(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: Dict[str, Any] = Depends(deps.get_current_active_user),
 ) -> Any:
     """Retrieve courts."""
     courts = crud.court.get_multi(db, skip=skip, limit=limit)
@@ -66,7 +66,7 @@ def create_court(
     *,
     db: Session = Depends(deps.get_db),
     court_in: schemas.institution.CourtCreate,
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: Dict[str, Any] = Depends(deps.get_current_active_user),
 ) -> Any:
     """Create new court."""
     court = crud.court.create(db, obj_in=court_in)

@@ -11,7 +11,7 @@ def read_roles(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: Dict[str, Any] = Depends(deps.get_current_active_user),
 ) -> Any:
     """Retrieve roles."""
     roles = db.query(models.system.Role).offset(skip).limit(limit).all()
@@ -22,7 +22,7 @@ def read_audit_logs(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: Dict[str, Any] = Depends(deps.get_current_active_user),
 ) -> Any:
     """Retrieve audit logs."""
     logs = db.query(models.system.AuditLog).order_by(models.system.AuditLog.timestamp.desc()).offset(skip).limit(limit).all()
@@ -31,7 +31,7 @@ def read_audit_logs(
 @router.get("/dashboard/stats")
 def get_dashboard_stats(
     db: Session = Depends(deps.get_db),
-    current_user: models.system.User = Depends(deps.get_current_active_user),
+    current_user: Dict[str, Any] = Depends(deps.get_current_active_user),
 ) -> Dict[str, Any]:
     """Get statistics for the dashboard."""
     # Simple count examples

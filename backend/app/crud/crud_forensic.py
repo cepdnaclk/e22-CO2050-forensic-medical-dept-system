@@ -1,21 +1,26 @@
-from typing import List
+from typing import List, Dict, Any
 from sqlalchemy.orm import Session
+from sqlalchemy import text
 from app.crud.base import CRUDBase
-from app.models.forensic import Injury, InjuryCause, BodyDiagramMark, Specimen, SpecimenInvestigation
-from app.schemas.forensic import (
-    InjuryCreate, InjuryCauseCreate, BodyDiagramMarkCreate, SpecimenCreate, SpecimenInvestigationCreate
-)
 
-class CRUDSpecimen(CRUDBase[Specimen, SpecimenCreate, SpecimenCreate]):
-    def get_by_case(self, db: Session, *, case_id: int) -> List[Specimen]:
-        return db.query(Specimen).filter(Specimen.case_id == case_id).all()
+class CRUDSpecimen(CRUDBase):
+    def get_by_case(self, db: Session, *, case_id: int) -> List[Dict[str, Any]]:
+        results = db.execute(
+            text("SELECT * FROM Specimens WHERE case_id = :case_id"),
+            {"case_id": case_id}
+        ).mappings().all()
+        return [dict(row) for row in results]
 
-class CRUDInjury(CRUDBase[Injury, InjuryCreate, InjuryCreate]):
-    def get_by_case(self, db: Session, *, case_id: int) -> List[Injury]:
-        return db.query(Injury).filter(Injury.case_id == case_id).all()
+class CRUDInjury(CRUDBase):
+    def get_by_case(self, db: Session, *, case_id: int) -> List[Dict[str, Any]]:
+        results = db.execute(
+            text("SELECT * FROM Injuries WHERE case_id = :case_id"),
+            {"case_id": case_id}
+        ).mappings().all()
+        return [dict(row) for row in results]
 
-injury = CRUDInjury(Injury)
-injury_cause = CRUDBase[InjuryCause, InjuryCauseCreate, InjuryCauseCreate](InjuryCause)
-body_diagram_mark = CRUDBase[BodyDiagramMark, BodyDiagramMarkCreate, BodyDiagramMarkCreate](BodyDiagramMark)
-specimen = CRUDSpecimen(Specimen)
-specimen_investigation = CRUDBase[SpecimenInvestigation, SpecimenInvestigationCreate, SpecimenInvestigationCreate](SpecimenInvestigation)
+injury = CRUDInjury("Injuries", "injury_id")
+injury_cause = CRUDBase("Injury_Causes", "cause_id")
+body_diagram_mark = CRUDBase("Body_Diagram_Marks", "mark_id")
+specimen = CRUDSpecimen("Specimens", "specimen_id")
+specimen_investigation = CRUDBase("Specimen_Investigations", "investigation_id")

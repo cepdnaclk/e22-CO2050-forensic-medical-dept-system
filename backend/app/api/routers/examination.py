@@ -17,7 +17,7 @@ def read_mlefs(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.system.User = Depends(allow_read),
+    current_user: Dict[str, Any] = Depends(allow_read),
 ) -> Any:
     """Retrieve MLEF forms."""
     query = db.query(models.examination.MLEFForm)
@@ -34,7 +34,7 @@ def create_mlef(
     *,
     db: Session = Depends(deps.get_db),
     mlef_in: schemas.examination.MLEFFormCreate,
-    current_user: models.system.User = Depends(allow_write_mlef),
+    current_user: Dict[str, Any] = Depends(allow_write_mlef),
 ) -> Any:
     """Create new MLEF form."""
     mlef = crud.mlef_form.create(db, obj_in=mlef_in)
@@ -45,7 +45,7 @@ def read_postmortems(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.system.User = Depends(allow_read),
+    current_user: Dict[str, Any] = Depends(allow_read),
 ) -> Any:
     """Retrieve Post Mortem Reports."""
     query = db.query(models.examination.PostMortemReport)
@@ -70,7 +70,7 @@ def create_postmortem(
     *,
     db: Session = Depends(deps.get_db),
     report_in: schemas.examination.PostMortemReportCreate,
-    current_user: models.system.User = Depends(allow_write_pm),
+    current_user: Dict[str, Any] = Depends(allow_write_pm),
 ) -> Any:
     """Create new Post Mortem Report."""
     report = crud.postmortem_report.create(db, obj_in=report_in)
@@ -81,7 +81,7 @@ def add_finding(
     pm_id: int,
     finding_in: schemas.examination.PostMortemFindingCreate,
     db: Session = Depends(deps.get_db),
-    current_user: models.system.User = Depends(allow_write_pm),
+    current_user: Dict[str, Any] = Depends(allow_write_pm),
 ) -> Any:
     """Add finding to PM Report."""
     finding_in.postmortem_report_id = pm_id
@@ -93,7 +93,7 @@ def create_autopsy_notification(
     *,
     db: Session = Depends(deps.get_db),
     notification_in: schemas.examination.AutopsyNotificationCreate,
-    current_user: models.system.User = Depends(allow_write_pm),
+    current_user: Dict[str, Any] = Depends(allow_write_pm),
 ) -> Any:
     """Create new Autopsy Notification."""
     notification = crud.autopsy_notification.create(db, obj_in=notification_in)
@@ -104,7 +104,7 @@ def read_court_certificates(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: models.system.User = Depends(allow_read),
+    current_user: Dict[str, Any] = Depends(allow_read),
 ) -> Any:
     """Retrieve Court Certificates."""
     certs = crud.court_certificate.get_multi(db, skip=skip, limit=limit)
@@ -115,7 +115,7 @@ def create_court_certificate(
     *,
     db: Session = Depends(deps.get_db),
     cert_in: schemas.examination.CourtCertificateCreate,
-    current_user: models.system.User = Depends(allow_write_cert),
+    current_user: Dict[str, Any] = Depends(allow_write_cert),
 ) -> Any:
     """Create new Court Certificate."""
     cert = crud.court_certificate.create(db, obj_in=cert_in)

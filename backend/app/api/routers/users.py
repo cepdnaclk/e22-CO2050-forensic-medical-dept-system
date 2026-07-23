@@ -1,4 +1,4 @@
-from typing import Any, List
+from typing import Any, List, Dict
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -13,7 +13,7 @@ def read_users(
     db: Session = Depends(deps.get_db),
     skip: int = 0,
     limit: int = 100,
-    current_user: User = Depends(deps.get_current_active_user),
+    current_user: Dict[str, Any] = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Retrieve users.
@@ -26,7 +26,7 @@ def create_user(
     *,
     db: Session = Depends(deps.get_db),
     user_in: UserCreate,
-    current_user: User = Depends(deps.get_current_active_user),
+    current_user: Dict[str, Any] = Depends(deps.get_current_active_user),
 ) -> Any:
     """
     Create new user.

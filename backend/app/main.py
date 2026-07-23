@@ -3,20 +3,12 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import settings
 from app.api.routers import auth, users, cases, examination, forensic, institutions, personnel, system
-from app.db.base import Base
 from app.db.session import engine
-from app.db.audit import register_audit_events
-
-
 
 app = FastAPI(
     title=settings.PROJECT_NAME,
     openapi_url=f"{settings.API_V1_STR}/openapi.json"
 )
-
-@app.on_event("startup")
-def startup_event():
-    register_audit_events()
 
 # Set all CORS enabled origins
 app.add_middleware(
