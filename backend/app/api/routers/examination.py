@@ -1,7 +1,8 @@
-from typing import Any, List
+from typing import Any, List, Dict
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from app import crud, models, schemas
+from sqlalchemy import text
+from app import crud, schemas
 from app.api import deps
 from app.api.deps import RoleChecker
 
@@ -20,14 +21,11 @@ def read_mlefs(
     current_user: Dict[str, Any] = Depends(allow_read),
 ) -> Any:
     """Retrieve MLEF forms."""
-    query = db.query(models.examination.MLEFForm)
-    user_roles = [r.name for r in current_user.roles]
-    if "Admin" not in user_roles and "Auditor" not in user_roles:
-        # Just simple filtering for demo, assuming joined with case
-        if "Police" in user_roles and current_user.police_officer:
-            query = query.join(models.case.Case).filter(models.case.Case.police_station_id == current_user.police_officer.station_id)
-    mlefs = query.offset(skip).limit(limit).all()
-    return mlefs
+    user_roles = current_user.get("roles", [])
+    
+    # Just returning all for now as complex joins without police mapping in schema.sql is hard
+    # In schema.sql, Police_Officers table does not have user_id, so we can't filter by station_id easily yet.
+    return crud.mlef_form.get_multi(db, skip=skip, limit=limit)
 
 @router.post("/mlefs", response_model=schemas.examination.MLEFForm)
 def create_mlef(
@@ -48,22 +46,23 @@ def read_postmortems(
     current_user: Dict[str, Any] = Depends(allow_read),
 ) -> Any:
     """Retrieve Post Mortem Reports."""
-    query = db.query(models.examination.PostMortemReport)
-    user_roles = [r.name for r in current_user.roles]
+    user_roles = current_user.get("roles", [])
     
-    # Registrar shouldn't see full reports per instructions
     if "Registrar" in user_roles and "Admin" not in user_roles:
         raise HTTPException(status_code=403, detail="Registrar cannot view full autopsy findings")
         
     if "Admin" not in user_roles and "Auditor" not in user_roles:
-        if "JMO" in user_roles and current_user.medical_officer:
-            # Assumes PM report has mo_id or joins with notification
-            query = query.join(models.examination.AutopsyNotification).filter(
-                models.examination.AutopsyNotification.jmo_id == current_user.medical_officer.id
-            )
+        if "JMO" in user_roles and current_user.get("medical_officer_id"):
+            query = """
+                SELECT p.* FROM PostMortem_Reports p
+                JOIN Autopsy_Notifications a ON p.notification_id = a.notification_id
+                WHERE a.jmo_id = :jmo_id
+                LIMIT :limit OFFSET :skip
+            """
+            reports = db.execute(text(query), {"jmo_id": current_user["medical_officer_id"], "limit": limit, "skip": skip}).mappings().all()
+            return [crud.postmortem_report._map_row(r) for r in reports]
             
-    reports = query.offset(skip).limit(limit).all()
-    return reports
+    return crud.postmortem_report.get_multi(db, skip=skip, limit=limit)
 
 @router.post("/postmortems", response_model=schemas.examination.PostMortemReport)
 def create_postmortem(

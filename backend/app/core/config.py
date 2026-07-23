@@ -13,7 +13,7 @@ class Settings(BaseSettings):
     # Database
     POSTGRES_SERVER: str = "localhost"
     POSTGRES_USER: str = "postgres"
-    POSTGRES_PASSWORD: str = "postgres"
+    POSTGRES_PASSWORD: str = "12345678"
     POSTGRES_DB: str = "fmcms"
     POSTGRES_PORT: str = "5432"
     

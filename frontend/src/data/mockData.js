@@ -2,11 +2,11 @@
 // Complete mock dataset for FMDIS — realistic forensic medical data
 
 export const ROLES = {
-  ADMIN: 'ADMIN',
+  ADMIN: 'Admin',
   JMO: 'JMO',
-  REGISTRAR: 'REGISTRAR',
-  POLICE: 'POLICE',
-  RECORDS_CLERK: 'RECORDS_CLERK',
+  REGISTRAR: 'Registrar',
+  POLICE: 'Police',
+  RECORDS_CLERK: 'Auditor',
 };
 
 export const ROLE_LABELS = {
