@@ -77,9 +77,13 @@ export default function CaseListPage() {
     },
     {
       key: 'assigned_jmo_id',
-      header: 'Assigned JMO ID',
+      header: 'Assigned JMO',
       sortable: false,
-      render: (row) => row.assigned_jmo_id || 'Unassigned',
+      render: (row) => {
+        if (!row.assigned_jmo_id) return 'Unassigned';
+        const jmo = medicalOfficers.find(mo => mo.id === row.assigned_jmo_id);
+        return jmo ? jmo.fullName : `ID: ${row.assigned_jmo_id}`;
+      },
     },
     {
       key: 'actions',

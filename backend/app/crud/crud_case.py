@@ -40,10 +40,6 @@ class CRUDCase(CRUDBase):
                 continue  # skip NULL fields — let DB use defaults
             if key == "case_number":
                 db_data["inquest_no"] = value
-            elif key in ("assigned_jmo_id", "police_station_id", "court_id"):
-                # These columns do not exist in the Cases table per schema.sql.
-                # They are skipped here; add them to the schema if required.
-                continue
             else:
                 db_data[key] = value
         return db_data
