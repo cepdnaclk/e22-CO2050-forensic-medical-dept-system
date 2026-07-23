@@ -139,3 +139,32 @@ University of Peradeniya.
 ## License
 
 This project is intended for academic and educational purposes.
+
+---
+
+## Running the Codebase Natively
+
+### 1. Set Up PostgreSQL
+1. Ensure PostgreSQL is installed and running on your machine (default port `5432`).
+2. Create a new database named `fmcms`.
+*(Note: The backend config expects the username to be `postgres` and the password to be `postgres`).*
+
+### 2. Initialize the Database
+Open a terminal in the `backend` folder and run the initialization script to execute `schema.sql` and set up the admin user:
+```powershell
+python initial_data.py
+```
+
+### 3. Start the Backend API
+Start the FastAPI server:
+```powershell
+uvicorn app.main:app --reload
+```
+You can access the API documentation at `http://localhost:8000/docs`.
+
+### 4. Start the Frontend
+In a new terminal, navigate to the `frontend` folder and run:
+```powershell
+npm run dev
+```
+Open your browser to `http://localhost:5173`. Log in with username `admin` and password `admin123`.
