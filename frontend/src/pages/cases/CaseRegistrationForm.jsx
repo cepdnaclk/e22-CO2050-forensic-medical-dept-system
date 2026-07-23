@@ -1,9 +1,10 @@
 // src/pages/cases/CaseRegistrationForm.jsx
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { Save, Loader2, CheckCircle } from 'lucide-react';
+import { Save, Loader2, CheckCircle, AlertCircle } from 'lucide-react';
 import PageHeader from '../../components/shared/PageHeader';
 import FormSection from '../../components/shared/FormSection';
+import { caseService } from '../../services/api';
 import {
   CASE_TYPES, CASE_STATUSES, medicalOfficers, policeStations,
   policeOfficers, courts, magistrates
@@ -14,6 +15,7 @@ export default function CaseRegistrationForm() {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
   const [errors, setErrors] = useState({});
+  const [apiError, setApiError] = useState('');
 
   const [form, setForm] = useState({
     caseType: '',
@@ -56,9 +58,7 @@ export default function CaseRegistrationForm() {
     if (!form.inquestNo.trim()) newErrors.inquestNo = 'Inquest number is required.';
     if (!form.openedDate) newErrors.openedDate = 'Opened date is required.';
     if (new Date(form.openedDate) > new Date()) newErrors.openedDate = 'Date cannot be in the future.';
-    if (!form.assignedJMO) newErrors.assignedJMO = 'Assigned JMO is required.';
-    if (!form.policeStation) newErrors.policeStation = 'Police station is required.';
-    if (!form.court) newErrors.court = 'Court is required.';
+    // JMO, Police Station, Court are optional — DB does not yet have those FK rows
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
@@ -67,11 +67,33 @@ export default function CaseRegistrationForm() {
     e.preventDefault();
     if (!validate()) return;
     setIsSubmitting(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
-    setSuccess(true);
-    setTimeout(() => navigate('/cases'), 1500);
+    setApiError('');
+    try {
+      // Map frontend form fields to backend API field names
+      await caseService.createCase({
+        case_number: form.inquestNo.trim(),   // inquest_no is used as the unique case number
+        court_case_no: form.courtCaseNo.trim() || null,
+        opened_date: form.openedDate,
+        status: form.status.toUpperCase(),
+        case_type_id: form.caseType ? parseInt(form.caseType) : null,
+        assigned_jmo_id: form.assignedJMO ? parseInt(form.assignedJMO) : null,
+        police_station_id: form.policeStation ? parseInt(form.policeStation) : null,
+        court_id: form.court ? parseInt(form.court) : null,
+      });
+      setSuccess(true);
+      setTimeout(() => navigate('/cases'), 1500);
+    } catch (err) {
+      const detail = err?.response?.data?.detail;
+      if (typeof detail === 'string') {
+        setApiError(detail);
+      } else if (Array.isArray(detail)) {
+        setApiError(detail.map(d => d.msg).join(', '));
+      } else {
+        setApiError('Failed to register case. Check that the backend is running.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -83,6 +105,13 @@ export default function CaseRegistrationForm() {
           { label: 'Register New Case' },
         ]}
       />
+
+      {apiError && (
+        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded flex items-center gap-2 text-sm text-red-700">
+          <AlertCircle className="h-4 w-4 flex-shrink-0" />
+          {apiError}
+        </div>
+      )}
 
       {success && (
         <div className="mb-4 p-3 bg-green-50 border border-green-200 rounded flex items-center gap-2 text-sm text-green-700">
@@ -159,7 +188,7 @@ export default function CaseRegistrationForm() {
         {/* Section 2 — Assigned Personnel */}
         <FormSection title="Section 2 — Assigned Personnel">
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Assigned JMO" error={errors.assignedJMO} required>
+            <FormField label="Assigned JMO">
               <select
                 value={form.assignedJMO}
                 onChange={(e) => handleChange('assignedJMO', e.target.value)}
@@ -174,7 +203,7 @@ export default function CaseRegistrationForm() {
               </select>
             </FormField>
 
-            <FormField label="Police Station" error={errors.policeStation} required>
+            <FormField label="Police Station">
               <select
                 value={form.policeStation}
                 onChange={(e) => handleChange('policeStation', e.target.value)}
@@ -208,7 +237,7 @@ export default function CaseRegistrationForm() {
         {/* Section 3 — Linked Court */}
         <FormSection title="Section 3 — Linked Court">
           <div className="grid grid-cols-2 gap-4">
-            <FormField label="Court" error={errors.court} required>
+            <FormField label="Court">
               <select
                 value={form.court}
                 onChange={(e) => handleChange('court', e.target.value)}

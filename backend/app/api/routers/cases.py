@@ -39,11 +39,9 @@ def create_case(
     current_user: Dict[str, Any] = Depends(allow_write_case),
 ) -> Any:
     """Create new case."""
-    # schema.sql uses inquest_no and court_case_no, not case_number
-    # The Pydantic schema expects case_number! We need to handle this.
-    case = crud.case.get_by_case_number(db, case_number=case_in.case_number if hasattr(case_in, 'case_number') else getattr(case_in, 'inquest_no', None))
-    if case:
-        raise HTTPException(status_code=400, detail="Case with this number already exists")
+    existing = crud.case.get_by_case_number(db, case_number=case_in.case_number)
+    if existing:
+        raise HTTPException(status_code=400, detail="A case with this inquest number already exists.")
     case = crud.case.create(db, obj_in=case_in)
     return case
 
