@@ -9,7 +9,7 @@ class CRUDSpecimen(CRUDBase):
             text("SELECT * FROM Specimens WHERE case_id = :case_id"),
             {"case_id": case_id}
         ).mappings().all()
-        return [dict(row) for row in results]
+        return [self._map_row(row) for row in results]
 
 class CRUDInjury(CRUDBase):
     def get_by_case(self, db: Session, *, case_id: int) -> List[Dict[str, Any]]:
@@ -17,7 +17,7 @@ class CRUDInjury(CRUDBase):
             text("SELECT * FROM Injuries WHERE case_id = :case_id"),
             {"case_id": case_id}
         ).mappings().all()
-        return [dict(row) for row in results]
+        return [self._map_row(row) for row in results]
 
 injury = CRUDInjury("Injuries", "injury_id")
 injury_cause = CRUDBase("Injury_Causes", "cause_id")

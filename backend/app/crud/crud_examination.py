@@ -9,7 +9,7 @@ class CRUDMLEFForm(CRUDBase):
             text("SELECT * FROM MLEF_Forms WHERE case_id = :case_id"),
             {"case_id": case_id}
         ).mappings().all()
-        return [dict(row) for row in results]
+        return [self._map_row(row) for row in results]
 
 class CRUDPostMortemReport(CRUDBase):
     def get_by_case(self, db: Session, *, case_id: int) -> List[Dict[str, Any]]:
@@ -24,7 +24,7 @@ class CRUDPostMortemReport(CRUDBase):
             text(query),
             {"case_id": case_id}
         ).mappings().all()
-        return [dict(row) for row in results]
+        return [self._map_row(row) for row in results]
         
     def get_by_pm_number(self, db: Session, *, pm_number: str) -> Optional[Dict[str, Any]]:
         # The pm number is usually inquest_no or pm_serial_no in the notification
@@ -33,7 +33,7 @@ class CRUDPostMortemReport(CRUDBase):
             text("SELECT * FROM PostMortem_Reports WHERE inquest_no = :pm_number"),
             {"pm_number": pm_number}
         ).mappings().first()
-        return dict(result) if result else None
+        return self._map_row(result)
 
 autopsy_notification = CRUDBase("Autopsy_Notifications", "notification_id")
 postmortem_report = CRUDPostMortemReport("PostMortem_Reports", "pm_report_id")

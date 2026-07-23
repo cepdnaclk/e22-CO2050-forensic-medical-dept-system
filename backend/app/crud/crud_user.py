@@ -2,36 +2,37 @@ from typing import Any, Dict, Optional, Union, List
 from sqlalchemy.orm import Session
 from sqlalchemy import text
 from app.core.security import get_password_hash, verify_password
+from app.crud.base import CRUDBase
 from app.schemas.system import UserCreate, UserUpdate
 
-class CRUDUser:
+class CRUDUser(CRUDBase):
     def get(self, db: Session, id: int) -> Optional[Dict[str, Any]]:
         result = db.execute(
             text("SELECT * FROM Users WHERE user_id = :id"),
             {"id": id}
         ).mappings().first()
-        return dict(result) if result else None
+        return self._map_row(result)
 
     def get_multi(self, db: Session, *, skip: int = 0, limit: int = 100) -> List[Dict[str, Any]]:
         results = db.execute(
             text("SELECT * FROM Users LIMIT :limit OFFSET :skip"),
             {"limit": limit, "skip": skip}
         ).mappings().all()
-        return [dict(row) for row in results]
+        return [self._map_row(row) for row in results]
 
     def get_by_username(self, db: Session, *, username: str) -> Optional[Dict[str, Any]]:
         result = db.execute(
             text("SELECT * FROM Users WHERE username = :username"),
             {"username": username}
         ).mappings().first()
-        return dict(result) if result else None
+        return self._map_row(result)
 
     def get_by_email(self, db: Session, *, email: str) -> Optional[Dict[str, Any]]:
         result = db.execute(
             text("SELECT * FROM Users WHERE email = :email"),
             {"email": email}
         ).mappings().first()
-        return dict(result) if result else None
+        return self._map_row(result)
 
     def create(self, db: Session, *, obj_in: UserCreate) -> Dict[str, Any]:
         hashed_password = get_password_hash(obj_in.password)
@@ -62,4 +63,4 @@ class CRUDUser:
             return None
         return user
 
-user = CRUDUser()
+user = CRUDUser("Users", "user_id")
