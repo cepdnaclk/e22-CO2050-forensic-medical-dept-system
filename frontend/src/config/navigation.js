@@ -29,7 +29,7 @@ export const navigationConfig = {
     { label: 'Dashboard', path: '/dashboard', icon: LayoutDashboard },
     { label: 'User Management', path: '/users', icon: Users },
     { label: 'Roles & Permissions', path: '/roles', icon: Shield },
-    { label: 'Audit Log', path: '/audit-log', icon: ScrollText },
+    { label: 'Audit Log', path: '/audit-trail', icon: ScrollText },
     { label: 'System Configuration', path: '/system-config', icon: Settings },
     { type: 'divider', label: 'Modules' },
     { label: 'Cases', path: '/cases', icon: FolderOpen },

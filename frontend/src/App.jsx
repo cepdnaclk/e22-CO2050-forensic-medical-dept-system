@@ -42,7 +42,7 @@ import CourtSummonsForm from './pages/court/CourtSummonsForm';
 // System
 import AuditLogList from './pages/audit/AuditLogList';
 import UserList from './pages/users/UserList';
-import UserForm from './pages/users/UserForm';
+import RolesPermissionsPage from './pages/users/RolesPermissionsPage';
 
 export default function App() {
   return (
@@ -91,7 +91,7 @@ export default function App() {
             {/* System */}
             <Route path="audit-trail" element={<AuditLogList />} />
             <Route path="users" element={<UserList />} />
-            <Route path="users/new" element={<UserForm />} />
+            <Route path="roles" element={<RolesPermissionsPage />} />
 
             {/* Catch-all redirect to dashboard */}
             <Route path="*" element={<Navigate to="/" replace />} />

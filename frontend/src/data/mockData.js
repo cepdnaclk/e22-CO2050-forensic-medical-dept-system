@@ -751,6 +751,21 @@ export const auditLogs = [
   { id: 13, userId: 2, username: 'dr.wickramasinghe', role: 'JMO', action: 'UPDATE', tableName: 'PostMortem_Reports', recordId: 'KDY/PM/2025/034', timestamp: '2025-07-22T10:00:00', ipAddress: '10.0.1.22' },
   { id: 14, userId: 1, username: 'admin', role: 'Administrator', action: 'DELETE', tableName: 'Users', recordId: '8', timestamp: '2025-07-22T11:30:00', ipAddress: '10.0.1.10' },
   { id: 15, userId: 5, username: 'clerk.fernando', role: 'Records Clerk', action: 'INSERT', tableName: 'Case_Documents', recordId: 'DOC-2025-0012', timestamp: '2025-07-22T13:00:00', ipAddress: '10.0.1.45' },
+  { id: 16, userId: 4, username: 'si.perera', role: 'Police Officer', action: 'INSERT', tableName: 'MLEF_Forms', recordId: 'MLEF/KDY/2025/0046', timestamp: '2025-07-22T14:00:00', ipAddress: '10.0.2.15' },
+  { id: 17, userId: 3, username: 'registrar.kandy', role: 'Registrar', action: 'SELECT', tableName: 'Court_Certificates', recordId: 'CERT/KDY/2025/002', timestamp: '2025-07-22T15:30:00', ipAddress: '10.0.3.10' },
+  { id: 18, userId: 2, username: 'dr.wickramasinghe', role: 'JMO', action: 'UPDATE', tableName: 'Specimens', recordId: 'SP/KDY/2025/001', timestamp: '2025-07-22T16:00:00', ipAddress: '10.0.1.22' },
+  { id: 19, userId: 1, username: 'admin', role: 'Administrator', action: 'UPDATE', tableName: 'System_Config', recordId: 'backup_schedule', timestamp: '2025-07-22T17:00:00', ipAddress: '10.0.1.10' },
+  { id: 20, userId: 5, username: 'clerk.fernando', role: 'Records Clerk', action: 'INSERT', tableName: 'Cases', recordId: 'KDY/2025/004', timestamp: '2025-07-22T08:30:00', ipAddress: '10.0.1.45' },
+  { id: 21, userId: 6, username: 'dr.silva', role: 'JMO', action: 'SELECT', tableName: 'PostMortem_Reports', recordId: 'KDY/PM/2025/034', timestamp: '2025-07-22T09:45:00', ipAddress: '10.0.1.23' },
+  { id: 22, userId: 4, username: 'si.perera', role: 'Police Officer', action: 'SELECT', tableName: 'MLEF_Forms', recordId: 'MLEF/KDY/2025/0045', timestamp: '2025-07-22T10:15:00', ipAddress: '10.0.2.15' },
+];
+
+export const alerts = [
+  { id: 1, type: 'critical', message: 'Database backup failed at 03:00 AM — manual intervention required.', timestamp: '2025-07-22T03:15:00' },
+  { id: 2, type: 'warning', message: 'Storage usage has exceeded 80% capacity (40.2 GB / 50 GB). Consider archiving old case files.', timestamp: '2025-07-21T14:00:00' },
+  { id: 3, type: 'info', message: 'System maintenance scheduled for Sunday, July 27 from 02:00–04:00 AM. Expect brief downtime.', timestamp: '2025-07-20T09:00:00' },
+  { id: 4, type: 'warning', message: 'User "inactive.user" has not logged in for over 30 days. Consider deactivating the account.', timestamp: '2025-07-19T10:00:00' },
+  { id: 5, type: 'info', message: 'FMDIS v1.1 update available — includes new report export features and performance improvements.', timestamp: '2025-07-18T08:00:00' },
 ];
 
 export const systemHealth = {
@@ -762,6 +777,29 @@ export const systemHealth = {
   uptime: '45 days, 6 hours',
   lastBackup: '2025-07-22T03:00:00',
   backupStatus: 'Successful',
+};
+
+export const permissionMatrix = {
+  [ROLES.ADMIN]: {
+    Cases: 'RWD', Users: 'RWD', MLEF_Forms: 'RW', PostMortem_Reports: 'RW',
+    Specimens: 'RW', Court_Documents: 'RW', Audit_Log: 'R', System_Config: 'RW',
+  },
+  [ROLES.JMO]: {
+    Cases: 'R', Users: '—', MLEF_Forms: 'RW', PostMortem_Reports: 'RWD',
+    Specimens: 'RW', Court_Documents: 'R', Audit_Log: '—', System_Config: '—',
+  },
+  [ROLES.POLICE]: {
+    Cases: 'R', Users: '—', MLEF_Forms: 'RW', PostMortem_Reports: 'R',
+    Specimens: '—', Court_Documents: 'R', Audit_Log: '—', System_Config: '—',
+  },
+  [ROLES.REGISTRAR]: {
+    Cases: 'R', Users: '—', MLEF_Forms: 'R', PostMortem_Reports: 'R',
+    Specimens: '—', Court_Documents: 'RW', Audit_Log: '—', System_Config: '—',
+  },
+  [ROLES.RECORDS_CLERK]: {
+    Cases: 'RW', Users: '—', MLEF_Forms: 'R', PostMortem_Reports: 'R',
+    Specimens: 'R', Court_Documents: 'R', Audit_Log: '—', System_Config: '—',
+  },
 };
 
 export const dashboardStats = {
