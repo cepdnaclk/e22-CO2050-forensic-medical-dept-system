@@ -1,4 +1,5 @@
-from sqlalchemy import Column, Integer, String, Date, ForeignKey, Enum
+from sqlalchemy import Column, Integer, String, Date, ForeignKey, Enum, CheckConstraint
+from app.core.encryption import EncryptedString
 from sqlalchemy.orm import relationship
 import enum
 
@@ -40,11 +41,16 @@ class DeceasedPerson(Base):
     id = Column(Integer, primary_key=True, index=True)
     case_id = Column(Integer, ForeignKey("cases.id"))
     full_name = Column(String, nullable=False)
-    nic = Column(String)
+    nic = Column(EncryptedString)
     age = Column(Integer)
     sex = Column(String)
     address = Column(String)
     date_of_death = Column(Date)
+    
+    __table_args__ = (
+        CheckConstraint('age >= 0', name='check_age_positive'),
+        CheckConstraint("sex IN ('M', 'F', 'Other')", name='check_sex_valid'),
+    )
     
     case = relationship("Case", back_populates="deceased_persons")
 
@@ -53,10 +59,15 @@ class InjuredPerson(Base):
     id = Column(Integer, primary_key=True, index=True)
     case_id = Column(Integer, ForeignKey("cases.id"))
     full_name = Column(String, nullable=False)
-    nic = Column(String)
+    nic = Column(EncryptedString)
     age = Column(Integer)
     sex = Column(String)
     address = Column(String)
     date_of_incident = Column(Date)
+    
+    __table_args__ = (
+        CheckConstraint('age >= 0', name='check_injured_age_positive'),
+        CheckConstraint("sex IN ('M', 'F', 'Other')", name='check_injured_sex_valid'),
+    )
     
     case = relationship("Case", back_populates="injured_persons")

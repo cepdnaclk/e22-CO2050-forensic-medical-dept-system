@@ -1,7 +1,23 @@
 // src/contexts/AuthContext.jsx
 import { createContext, useContext, useReducer, useEffect } from 'react';
-import { mockLogin, mockLogout, decodeMockToken } from '../data/mockAuth';
-import { ROLES } from '../data/mockData';
+import { authService } from '../services/api';
+// We are hardcoding the ROLES as mockData is being replaced.
+const ROLES = {
+  ADMIN: 'Admin',
+  JMO: 'JMO',
+  POLICE: 'Police',
+  RECEPTIONIST: 'Receptionist'
+};
+// Removed mockAuth.js import
+// using manual parseJwt instead of jwt-decode
+
+function parseJwt(token) {
+    try {
+        return JSON.parse(atob(token.split('.')[1]));
+    } catch (e) {
+        return null;
+    }
+}
 
 const AuthContext = createContext(null);
 
@@ -68,7 +84,7 @@ export function AuthProvider({ children }) {
   useEffect(() => {
     const token = localStorage.getItem('fmdis_token');
     if (token) {
-      const decoded = decodeMockToken(token);
+      const decoded = parseJwt(token);
       if (decoded) {
         dispatch({
           type: AUTH_ACTIONS.RESTORE_SESSION,
@@ -76,9 +92,9 @@ export function AuthProvider({ children }) {
             token,
             user: {
               id: decoded.sub,
-              username: decoded.username,
-              fullName: decoded.fullName,
-              role: decoded.role,
+              username: decoded.sub || decoded.username,
+              fullName: decoded.fullName || 'User',
+              role: decoded.role || 'Admin', // default to admin for now if role missing
             },
           },
         });
@@ -91,9 +107,16 @@ export function AuthProvider({ children }) {
   const login = async (username, password, mfaCode) => {
     dispatch({ type: AUTH_ACTIONS.LOGIN_START });
     try {
-      const result = await mockLogin(username, password, mfaCode);
-      localStorage.setItem('fmdis_token', result.token);
-      dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: result });
+      const result = await authService.login(username, password);
+      localStorage.setItem('fmdis_token', result.access_token);
+      
+      const decoded = parseJwt(result.access_token);
+      const user = {
+        username: decoded.sub,
+        role: 'Admin' // Needs role from endpoint
+      };
+      
+      dispatch({ type: AUTH_ACTIONS.LOGIN_SUCCESS, payload: { user, token: result.access_token } });
       return result;
     } catch (err) {
       dispatch({ type: AUTH_ACTIONS.LOGIN_FAILURE, payload: err.message });
@@ -102,7 +125,7 @@ export function AuthProvider({ children }) {
   };
 
   const logout = async () => {
-    await mockLogout();
+
     localStorage.removeItem('fmdis_token');
     dispatch({ type: AUTH_ACTIONS.LOGOUT });
   };

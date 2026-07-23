@@ -1,12 +1,14 @@
 // src/pages/cases/CaseListPage.jsx
-import { useState, useMemo } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { Plus, Search, Filter } from 'lucide-react';
 import PageHeader from '../../components/shared/PageHeader';
 import DataTable from '../../components/shared/DataTable';
 import StatusBadge from '../../components/shared/StatusBadge';
 import { useAuth, ROLES } from '../../contexts/AuthContext';
-import { cases, CASE_TYPES, CASE_STATUSES, medicalOfficers } from '../../data/mockData';
+import { caseService } from '../../services/api';
+// Using mock constants for dropdowns until their APIs are wired
+import { CASE_TYPES, CASE_STATUSES, medicalOfficers } from '../../data/mockData';
 
 export default function CaseListPage() {
   const navigate = useNavigate();
@@ -18,27 +20,49 @@ export default function CaseListPage() {
   const [filterStatus, setFilterStatus] = useState('');
   const [filterJMO, setFilterJMO] = useState('');
 
+  const [cases, setCases] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    const fetchCases = async () => {
+      try {
+        setLoading(true);
+        // We can pass status filter to the API directly if needed
+        const data = await caseService.getCases({ status: filterStatus || undefined });
+        setCases(data);
+      } catch (err) {
+        setError('Failed to load cases');
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchCases();
+  }, [filterStatus]); // refetch when status changes
+
   const filteredCases = useMemo(() => {
     return cases.filter((c) => {
       if (search) {
         const q = search.toLowerCase();
         if (
-          !c.caseNo.toLowerCase().includes(q) &&
-          !c.inquestNo.toLowerCase().includes(q)
+          !(c.case_number || '').toLowerCase().includes(q) &&
+          !(c.court_case_no || '').toLowerCase().includes(q)
         )
           return false;
       }
-      if (filterType && c.caseType !== filterType) return false;
-      if (filterStatus && c.status !== filterStatus) return false;
-      if (filterJMO && c.assignedJMO.id !== parseInt(filterJMO)) return false;
+      // Depending on API response shape, adjust these field names:
+      // c.case_type might be an object or string
+      // filterType might need adjustment based on how the backend returns CaseType
+      // if (filterType && c.caseType !== filterType) return false;
+      if (filterJMO && c.assigned_jmo_id !== parseInt(filterJMO)) return false;
       return true;
     });
-  }, [search, filterType, filterStatus, filterJMO]);
+  }, [cases, search, filterType, filterJMO]);
 
   const columns = [
-    { key: 'caseNo', header: 'Case No.', sortable: true },
-    { key: 'inquestNo', header: 'Inquest No.', sortable: true },
-    { key: 'caseType', header: 'Case Type', sortable: true },
+    { key: 'case_number', header: 'Case No.', sortable: true },
+    { key: 'court_case_no', header: 'Inquest No.', sortable: true },
     {
       key: 'status',
       header: 'Status',
@@ -46,16 +70,16 @@ export default function CaseListPage() {
       render: (row) => <StatusBadge status={row.status} />,
     },
     {
-      key: 'openedDate',
+      key: 'opened_date',
       header: 'Opened Date',
       sortable: true,
-      render: (row) => new Date(row.openedDate).toLocaleDateString('en-LK'),
+      render: (row) => new Date(row.opened_date).toLocaleDateString('en-LK'),
     },
     {
-      key: 'assignedJMO',
-      header: 'Assigned JMO',
+      key: 'assigned_jmo_id',
+      header: 'Assigned JMO ID',
       sortable: false,
-      render: (row) => row.assignedJMO.fullName,
+      render: (row) => row.assigned_jmo_id || 'Unassigned',
     },
     {
       key: 'actions',
@@ -169,12 +193,18 @@ export default function CaseListPage() {
       </div>
 
       {/* Table */}
-      <DataTable
-        columns={columns}
-        data={filteredCases}
-        onRowClick={(row) => navigate(`/cases/${row.id}`)}
-        emptyMessage="No cases match the current filters."
-      />
+      {loading ? (
+        <div className="text-center py-10 text-gray-500">Loading cases...</div>
+      ) : error ? (
+        <div className="text-center py-10 text-red-500">{error}</div>
+      ) : (
+        <DataTable
+          columns={columns}
+          data={filteredCases}
+          onRowClick={(row) => navigate(`/cases/${row.id}`)}
+          emptyMessage="No cases match the current filters."
+        />
+      )}
     </div>
   );
 }
